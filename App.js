@@ -77,13 +77,13 @@ export default function App() {
     else if (!grades.final) { res.durum = 'Finale Kaldınız'; res.renk = '#ef4444'; }
     else {
       const fScore = (parseFloat(grades.final) * 0.6 + ortalama * 0.4).toFixed(2);
-      res.finalHesap = fScore; // Final puanını hafızaya al
+      res.finalHesap = fScore; 
       
       if (fScore >= 65) { res.durum = 'Final ile Geçtiniz ✓'; res.renk = '#10b981'; }
       else if (!grades.butunleme) { res.durum = 'Bütünlemeye Kaldınız'; res.renk = '#ef4444'; }
       else {
         const bScore = (parseFloat(grades.butunleme) * 0.6 + ortalama * 0.4).toFixed(2);
-        res.butunlemeHesap = bScore; // Bütünleme puanını hafızaya al
+        res.butunlemeHesap = bScore; 
         const isP = bScore >= 65;
         res.durum = isP ? 'Bütünleme ile Geçtiniz ✓' : 'Kaldınız ✗';
         res.renk = isP ? '#10b981' : '#ef4444';
@@ -95,8 +95,10 @@ export default function App() {
   const shareOnWhatsApp = () => {
     if (!results) return;
     let text = `🚀 YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
-    if (results.finalHesap && !results.butunlemeHesap) text += `Final Hesaplaması: ${results.finalHesap}\n`;
-    if (results.butunlemeHesap) text += `Bütünleme Hesaplaması: ${results.butunlemeHesap}\n`;
+    
+    if (results.finalHesap && !results.butunlemeHesap) text += `Yıl Sonu Notu: ${results.finalHesap}\n`;
+    if (results.butunlemeHesap) text += `Yıl Sonu Notu: ${results.butunlemeHesap}\n`;
+    
     text += `Durum: ${results.durum}\n`;
     if (targetNote) text += `Hedef: ${targetNote.text}\n`;
     text += `\nUygulama: ${window.location.href}`;
@@ -161,12 +163,11 @@ export default function App() {
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
             <Text style={styles.resN}>Ortalama: {results.ortalama}</Text>
             
-            {/* KAYIP VERİLER BURAYA EKLENDİ */}
             {results.finalHesap && !results.butunlemeHesap && (
-              <Text style={styles.detailT}>Final Puanı: {results.finalHesap}</Text>
+              <Text style={styles.detailT}>Yıl Sonu Notu: {results.finalHesap}</Text>
             )}
             {results.butunlemeHesap && (
-              <Text style={styles.detailT}>Bütünleme Puanı: {results.butunlemeHesap}</Text>
+              <Text style={styles.detailT}>Yıl Sonu Notu: {results.butunlemeHesap}</Text>
             )}
 
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : '#c084fc' }]}>{targetNote.text}</Text>}
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   res: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderTopWidth: 4, marginTop: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
   resSt: { fontWeight: 'bold', fontSize: 18, marginBottom: 4 },
   resN: { color: '#fff', fontSize: 28, fontWeight: 'bold' },
-  detailT: { color: '#94a3b8', fontSize: 16, fontWeight: '600', marginTop: 4 }, // Yeni eklenen veri satırı stili
+  detailT: { color: '#94a3b8', fontSize: 16, fontWeight: '600', marginTop: 4 },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '600' },
   waBtn: { backgroundColor: '#25D366', marginTop: 20, padding: 14, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
