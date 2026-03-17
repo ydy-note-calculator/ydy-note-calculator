@@ -71,15 +71,19 @@ export default function App() {
       else setTargetNote({ type: 'fail', text: 'Finalden 100 alsanız bile geçilemiyor!' });
     } else { setTargetNote(null); }
 
-    let res = { ortalama: ortalama.toFixed(2), durum: '', renk: '' };
+    let res = { ortalama: ortalama.toFixed(2), durum: '', renk: '', finalHesap: null, butunlemeHesap: null };
+    
     if (ortalama >= minForPass) { res.durum = 'Ortalama ile Geçtiniz ✓'; res.renk = '#10b981'; }
     else if (!grades.final) { res.durum = 'Finale Kaldınız'; res.renk = '#ef4444'; }
     else {
       const fScore = (parseFloat(grades.final) * 0.6 + ortalama * 0.4).toFixed(2);
+      res.finalHesap = fScore; // Final puanını hafızaya al
+      
       if (fScore >= 65) { res.durum = 'Final ile Geçtiniz ✓'; res.renk = '#10b981'; }
       else if (!grades.butunleme) { res.durum = 'Bütünlemeye Kaldınız'; res.renk = '#ef4444'; }
       else {
         const bScore = (parseFloat(grades.butunleme) * 0.6 + ortalama * 0.4).toFixed(2);
+        res.butunlemeHesap = bScore; // Bütünleme puanını hafızaya al
         const isP = bScore >= 65;
         res.durum = isP ? 'Bütünleme ile Geçtiniz ✓' : 'Kaldınız ✗';
         res.renk = isP ? '#10b981' : '#ef4444';
@@ -90,7 +94,13 @@ export default function App() {
 
   const shareOnWhatsApp = () => {
     if (!results) return;
-    const text = `🚀 YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\nDurum: ${results.durum}\n${targetNote ? `Hedef: ${targetNote.text}\n` : ''}\nUygulama: ${window.location.href}`;
+    let text = `🚀 YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
+    if (results.finalHesap && !results.butunlemeHesap) text += `Final Hesaplaması: ${results.finalHesap}\n`;
+    if (results.butunlemeHesap) text += `Bütünleme Hesaplaması: ${results.butunlemeHesap}\n`;
+    text += `Durum: ${results.durum}\n`;
+    if (targetNote) text += `Hedef: ${targetNote.text}\n`;
+    text += `\nUygulama: ${window.location.href}`;
+    
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
@@ -150,6 +160,15 @@ export default function App() {
           <View style={[styles.res, { borderTopColor: results.renk }]}>
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
             <Text style={styles.resN}>Ortalama: {results.ortalama}</Text>
+            
+            {/* KAYIP VERİLER BURAYA EKLENDİ */}
+            {results.finalHesap && !results.butunlemeHesap && (
+              <Text style={styles.detailT}>Final Puanı: {results.finalHesap}</Text>
+            )}
+            {results.butunlemeHesap && (
+              <Text style={styles.detailT}>Bütünleme Puanı: {results.butunlemeHesap}</Text>
+            )}
+
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : '#c084fc' }]}>{targetNote.text}</Text>}
             <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
           </View>
@@ -183,7 +202,8 @@ const styles = StyleSheet.create({
   res: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderTopWidth: 4, marginTop: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
   resSt: { fontWeight: 'bold', fontSize: 18, marginBottom: 4 },
   resN: { color: '#fff', fontSize: 28, fontWeight: 'bold' },
-  targetT: { fontSize: 14, marginTop: 8, fontWeight: '600' },
+  detailT: { color: '#94a3b8', fontSize: 16, fontWeight: '600', marginTop: 4 }, // Yeni eklenen veri satırı stili
+  targetT: { fontSize: 14, marginTop: 12, fontWeight: '600' },
   waBtn: { backgroundColor: '#25D366', marginTop: 20, padding: 14, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   reset: { marginTop: 20, padding: 10, alignItems: 'center' },
@@ -192,4 +212,3 @@ const styles = StyleSheet.create({
   footerT: { color: '#64748b', fontSize: 16, fontWeight: '700', letterSpacing: 1.5 },
   flex: { flex: 1 }
 });
-    
