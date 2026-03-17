@@ -62,9 +62,11 @@ export default function App() {
     const odevPoints = (parseFloat(grades.odev) || 0) / 100 * 5;
 
     const ortalama = quizPoints + vizePoints + writingPoints + sunumPoints + kanaatPoints + odevPoints;
-    const minForPass = selectedCourse === 'A' ? 85 : selectedCourse === 'B' ? 80 : 75;
     
-    if (!grades.final) {
+    // Geçme barajları otomasyon yuvarlama mantığına (0.5) göre güncellendi.
+    const minForPass = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
+    
+    if (grades.final === '') {
       const needed = Math.ceil((65 - (ortalama * 0.4)) / 0.6);
       if (ortalama >= minForPass) setTargetNote({ type: 'pass', text: 'Ortalamanız geçmek için yeterli!' });
       else if (needed <= 100) setTargetNote({ type: 'target', text: `Finalde gereken minimum not: ${needed}` });
@@ -73,18 +75,27 @@ export default function App() {
 
     let res = { ortalama: ortalama.toFixed(2), durum: '', renk: '', finalHesap: null, butunlemeHesap: null };
     
-    if (ortalama >= minForPass) { res.durum = 'Ortalama ile Geçtiniz ✓'; res.renk = '#10b981'; }
-    else if (!grades.final) { res.durum = 'Finale Kaldınız'; res.renk = '#ef4444'; }
+    if (ortalama >= minForPass) { 
+      res.durum = 'Ortalama ile Geçtiniz ✓'; 
+      res.renk = '#10b981'; 
+      if (grades.final !== '') {
+        res.finalHesap = (parseFloat(grades.final) * 0.6 + ortalama * 0.4).toFixed(2);
+      }
+    }
+    else if (grades.final === '') { 
+      res.durum = 'Finale Kaldınız'; 
+      res.renk = '#ef4444'; 
+    }
     else {
       const fScore = (parseFloat(grades.final) * 0.6 + ortalama * 0.4).toFixed(2);
       res.finalHesap = fScore; 
       
-      if (fScore >= 65) { res.durum = 'Final ile Geçtiniz ✓'; res.renk = '#10b981'; }
-      else if (!grades.butunleme) { res.durum = 'Bütünlemeye Kaldınız'; res.renk = '#ef4444'; }
+      if (fScore >= 64.5) { res.durum = 'Final ile Geçtiniz ✓'; res.renk = '#10b981'; } // Final geçme barajı da 65'ten 64.5'e uyarlanabilir, şu an 64.5 yapıldı
+      else if (grades.butunleme === '') { res.durum = 'Bütünlemeye Kaldınız'; res.renk = '#ef4444'; }
       else {
         const bScore = (parseFloat(grades.butunleme) * 0.6 + ortalama * 0.4).toFixed(2);
         res.butunlemeHesap = bScore; 
-        const isP = bScore >= 65;
+        const isP = bScore >= 64.5;
         res.durum = isP ? 'Bütünleme ile Geçtiniz ✓' : 'Kaldınız ✗';
         res.renk = isP ? '#10b981' : '#ef4444';
       }
@@ -96,8 +107,8 @@ export default function App() {
     if (!results) return;
     let text = `🚀 YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
     
-    if (results.finalHesap && !results.butunlemeHesap) text += `Yıl Sonu Notu: ${results.finalHesap}\n`;
-    if (results.butunlemeHesap) text += `Yıl Sonu Notu: ${results.butunlemeHesap}\n`;
+    if (grades.final !== '' && results.finalHesap && grades.butunleme === '') text += `Yıl Sonu Notu: ${results.finalHesap}\n`;
+    if (grades.butunleme !== '' && results.butunlemeHesap) text += `Yıl Sonu Notu: ${results.butunlemeHesap}\n`;
     
     text += `Durum: ${results.durum}\n`;
     if (targetNote) text += `Hedef: ${targetNote.text}\n`;
@@ -163,10 +174,11 @@ export default function App() {
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
             <Text style={styles.resN}>Ortalama: {results.ortalama}</Text>
             
-            {results.finalHesap && !results.butunlemeHesap && (
+            {grades.final !== '' && results.finalHesap !== null && grades.butunleme === '' && (
               <Text style={styles.detailT}>Yıl Sonu Notu: {results.finalHesap}</Text>
             )}
-            {results.butunlemeHesap && (
+            
+            {grades.butunleme !== '' && results.butunlemeHesap !== null && (
               <Text style={styles.detailT}>Yıl Sonu Notu: {results.butunlemeHesap}</Text>
             )}
 
@@ -213,3 +225,4 @@ const styles = StyleSheet.create({
   footerT: { color: '#64748b', fontSize: 16, fontWeight: '700', letterSpacing: 1.5 },
   flex: { flex: 1 }
 });
+                     
