@@ -147,6 +147,9 @@ export default function App() {
 
   if (!isLoaded) return null;
 
+  // ==========================================
+  // 1. KATMAN: GİRİŞ (PORTAL) EKRANI
+  // ==========================================
   if (!isEntered) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
@@ -164,12 +167,29 @@ export default function App() {
           <Text style={[styles.loginTitle, { color: theme.text }]}>YDY</Text>
           <Text style={[styles.loginSubtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
 
-          <Text style={[styles.label, { color: theme.accent, marginTop: 40 }]}>KİMLİK BİLGİLERİ</Text>
+          {/* İŞTE ÇÖZÜM: KUR SEÇİMİ İLK BAŞA ALINDI */}
+          <Text style={[styles.label, { color: theme.accent, marginTop: 30 }]}>KUR SEÇİMİ</Text>
+          <View style={styles.simetricRow}>
+            {['A', 'B', 'C'].map((k, i) => (
+              <React.Fragment key={k}>
+                <TouchableOpacity onPress={() => setSelectedCourse(k)} style={[styles.btn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border }]}>
+                  <Text style={[styles.btnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>{k} KURU</Text>
+                </TouchableOpacity>
+                {i !== 2 && <View style={styles.gap16} />}
+              </React.Fragment>
+            ))}
+          </View>
+
+          <Text style={[styles.label, { color: theme.accent, marginTop: 30 }]}>KİMLİK BİLGİLERİ</Text>
           <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
           <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]} value={studentName} onChangeText={setStudentName} placeholder="Örn: Alparslan Soyak" placeholderTextColor={theme.textSecondary}/>
           
-          <Text style={[styles.iL, { color: theme.text }]}>SINIF NUMARASI</Text>
-          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 30 }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} placeholder="Örn: 12" placeholderTextColor={theme.textSecondary} keyboardType="numeric" maxLength={2}/>
+          {/* İŞTE ÇÖZÜM: YAZI "SINIF" YAPILDI VE İKİ BÖLÜMLÜ KUTU EKLENDİ */}
+          <Text style={[styles.iL, { color: theme.text }]}>SINIF</Text>
+          <View style={[styles.classBox, { backgroundColor: theme.bg, borderColor: theme.border, marginBottom: 30 }]}>
+            <Text style={[styles.prefix, { color: theme.text, borderRightColor: theme.border }]}>{selectedCourse}</Text>
+            <TextInput style={[styles.inputNoBorder, { color: theme.text }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} placeholder="12" placeholderTextColor={theme.textSecondary} keyboardType="numeric" maxLength={2}/>
+          </View>
 
           <TouchableOpacity style={[styles.loginBtn, {backgroundColor: theme.accent}]} onPress={handleLogin}>
             <Text style={styles.loginBtnT}>Sisteme Giriş Yap</Text>
@@ -179,13 +199,15 @@ export default function App() {
     );
   }
 
+  // ==========================================
+  // 2. KATMAN: ANA HESAPLAMA EKRANI
+  // ==========================================
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
       
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        {/* İŞTE MUTLAK ÇÖZÜM: isMobile mantığı titleCenter'a da uygulandı */}
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
           <View style={[styles.titleCenter, isMobile ? { position: 'relative' } : {}]}>
             <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>YDY</Text>
@@ -210,19 +232,7 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>KUR SEÇİMİ</Text>
-          <View style={styles.simetricRow}>
-            {['A', 'B', 'C'].map((k, i) => (
-              <React.Fragment key={k}>
-                <TouchableOpacity onPress={() => setSelectedCourse(k)} style={[styles.btn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border }]}>
-                  <Text style={[styles.btnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>{k} KURU</Text>
-                </TouchableOpacity>
-                {i !== 2 && <View style={styles.gap16} />}
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
+        {/* ANA EKRANDAN KUR SEÇİMİ TAMAMEN KALDIRILDI. EKRAN ARTIK DAHA FERAH. */}
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
@@ -312,7 +322,6 @@ const styles = StyleSheet.create({
   headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, gap: 15 },
   headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative' },
   
-  // Z-index ve hizalama korundu
   titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
@@ -346,6 +355,10 @@ const styles = StyleSheet.create({
   
   btn: { flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', borderWidth: 1 },
   btnT: { fontWeight: 'bold', fontSize: 15 },
+  
+  classBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, height: 50 },
+  prefix: { paddingHorizontal: 12, fontWeight: 'bold', borderRightWidth: 1 },
+  inputNoBorder: { flex: 1, paddingHorizontal: 10, fontSize: 15 },
   
   res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginTop: 4 },
   resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
