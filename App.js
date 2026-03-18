@@ -140,7 +140,7 @@ export default function App() {
             <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>YDY</Text>
             <Text style={[styles.subtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
           </View>
-          <View style={[styles.themeSelector, { marginTop: isMobile ? 16 : 0 }]}>
+          <View style={[styles.themeSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0 }]}>
             {Object.values(THEMES).map(t => (
               <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
                 <Text style={styles.themeIcon}>{t.icon}</Text>
@@ -161,24 +161,24 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
-          <View style={styles.simetricRow}>{renderInput('Quiz 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('Quiz 2', 'quiz', 1)}</View>
+          <Text style={[styles.label, { color: theme.accent }]}>QUİZ NOTLARI</Text>
+          <View style={styles.simetricRow}>{renderInput('QUİZ 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('QUİZ 2', 'quiz', 1)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput('Quiz 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('Quiz 4', 'quiz', 3)}</View>
+          <View style={styles.simetricRow}>{renderInput('QUİZ 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('QUİZ 4', 'quiz', 3)}</View>
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>VİZE NOTLARI</Text>
-          <View style={styles.simetricRow}>{renderInput('Vize 1', 'vize', 0)}<View style={styles.gap16}/>{renderInput('Vize 2', 'vize', 1)}</View>
+          <View style={styles.simetricRow}>{renderInput('VİZE 1', 'vize', 0)}<View style={styles.gap16}/>{renderInput('VİZE 2', 'vize', 1)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput('Vize 3', 'vize', 2)}<View style={styles.gap16}/>{renderInput('Vize 4', 'vize', 3)}</View>
+          <View style={styles.simetricRow}>{renderInput('VİZE 3', 'vize', 2)}<View style={styles.gap16}/>{renderInput('VİZE 4', 'vize', 3)}</View>
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
-          <View style={styles.simetricRow}>{renderInput('Writing', 'writing')}<View style={styles.gap16}/>{renderInput('Sunum', 'sunum')}</View>
+          <View style={styles.simetricRow}>{renderInput('WRITING', 'writing')}<View style={styles.gap16}/>{renderInput('SUNUM ÖDEVİ', 'sunum')}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput('Kanaat', 'kanaat')}<View style={styles.gap16}/>{renderInput('Ödev', 'odev')}</View>
+          <View style={styles.simetricRow}>{renderInput('KANAAT NOTU', 'kanaat')}<View style={styles.gap16}/>{renderInput('ÖDEV', 'odev')}</View>
         </View>
 
         <View style={styles.simetricRow}>
@@ -190,19 +190,34 @@ export default function App() {
         {results && (
           <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
-            <Text style={[styles.resN, { color: theme.text }]}>Ortalama: {results.ortalama}</Text>
+            <Text style={[styles.resN, { color: theme.text }]}>ORTALAMA: {results.ortalama}</Text>
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
             <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
             <TouchableOpacity style={styles.waBtn} onPress={() => Linking.openURL(`https://wa.me/?text=${encodeURIComponent('🚀 YDY Ortalama: ' + results.ortalama + '\nDurum: ' + results.durum + '\n' + window.location.href)}`)}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
           </View>
         )}
 
+        {/* FEEDBACK SECTION WITH UPDATED PLACEHOLDERS */}
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>ÖNERİ VE GERİ BİLDİRİM</Text>
           <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
-          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} value={studentName} onChangeText={setStudentName} placeholder="İsimsiz Gönder" placeholderTextColor={theme.textSecondary} />
-          <TextInput style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} placeholder="Mesajınızı buraya yazın..." placeholderTextColor={theme.textSecondary} value={feedbackText} onChangeText={setFeedbackText} maxLength={500} multiline={true}/>
-          <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}><Text style={styles.fSendBtnT}>Mesajı Gönder</Text></TouchableOpacity>
+          <TextInput 
+            style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} 
+            value={studentName} 
+            onChangeText={setStudentName} 
+            placeholder="ADINIZI GİRİNİZ" 
+            placeholderTextColor={theme.textSecondary} 
+          />
+          <TextInput 
+            style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
+            placeholder="ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ..." 
+            placeholderTextColor={theme.textSecondary} 
+            value={feedbackText} 
+            onChangeText={setFeedbackText} 
+            maxLength={500} 
+            multiline={true}
+          />
+          <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}><Text style={styles.fSendBtnT}>MESAJI GÖNDER</Text></TouchableOpacity>
         </View>
 
         <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
@@ -213,11 +228,11 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 }, scroll: { padding: 16 },
-  headerRowMobile: { flexDirection: 'column', alignItems: 'center', marginTop: 40, marginBottom: 40 },
-  headerRowDesktop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 40 },
+  headerRowMobile: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
+  headerRowDesktop: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative' },
   titleContainer: { alignItems: 'center' },
-  title: { fontWeight: '900', letterSpacing: 2 },
-  subtitle: { fontSize: 18, fontWeight: '700' },
+  title: { fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
+  subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
   themeSelector: { flexDirection: 'row', gap: 8 },
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeIcon: { fontSize: 16 },
