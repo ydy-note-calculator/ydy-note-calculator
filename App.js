@@ -7,6 +7,8 @@ const { width } = Dimensions.get('window');
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
 export default function App() {
+  const [studentName, setStudentName] = useState('');
+  const [studentClass, setStudentClass] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('A');
   const [grades, setGrades] = useState({
     quiz: ['', '', '', ''], vize: ['', '', '', ''],
@@ -27,7 +29,6 @@ export default function App() {
       meta.content = 'notranslate';
       document.head.appendChild(meta);
 
-      // G-TAG Enjeksiyonu
       const script1 = document.createElement('script');
       script1.async = true;
       script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
@@ -50,10 +51,12 @@ export default function App() {
       calculateGrade();
       saveData();
     }
-  }, [grades, selectedCourse]);
+  }, [grades, selectedCourse, studentName, studentClass]);
 
   const saveData = async () => {
-    try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse })); } catch (e) { console.error(e); }
+    try { 
+      await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, studentClass })); 
+    } catch (e) { console.error(e); }
   };
 
   const loadSavedData = async () => {
@@ -61,8 +64,10 @@ export default function App() {
       const savedData = await AsyncStorage.getItem('@ydy_data');
       if (savedData) {
         const parsed = JSON.parse(savedData);
-        setGrades(parsed.grades);
-        setSelectedCourse(parsed.selectedCourse);
+        if (parsed.grades) setGrades(parsed.grades);
+        if (parsed.selectedCourse) setSelectedCourse(parsed.selectedCourse);
+        if (parsed.studentName) setStudentName(parsed.studentName);
+        if (parsed.studentClass) setStudentClass(parsed.studentClass);
       }
     } catch (e) { console.error(e); } finally { setIsLoaded(true); }
   };
@@ -78,8 +83,6 @@ export default function App() {
     const odevPoints = (parseFloat(grades.odev) || 0) / 100 * 5;
 
     const ortalama = quizPoints + vizePoints + writingPoints + sunumPoints + kanaatPoints + odevPoints;
-    
-    // Geçme barajları otomasyon yuvarlama mantığına göre
     const minForPass = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
     
     if (grades.final === '') {
@@ -94,9 +97,7 @@ export default function App() {
     if (ortalama >= minForPass) { 
       res.durum = 'Ortalama ile Geçtiniz ✓'; 
       res.renk = '#10b981'; 
-      if (grades.final !== '') {
-        res.finalHesap = (parseFloat(grades.final) * 0.6 + ortalama * 0.4).toFixed(2);
-      }
+      if (grades.final !== '') res.finalHesap = (parseFloat(grades.final) * 0.6 + ortalama * 0.4).toFixed(2);
     }
     else if (grades.final === '') { 
       res.durum = 'Finale Kaldınız'; 
@@ -121,7 +122,8 @@ export default function App() {
 
   const shareOnWhatsApp = () => {
     if (!results) return;
-    let text = `🚀 YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
+    const kimlik = studentName ? `${studentName} - ` : '';
+    let text = `🚀 ${kimlik}YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
     if (grades.final !== '' && results.finalHesap && grades.butunleme === '') text += `Yıl Sonu Notu: ${results.finalHesap}\n`;
     if (grades.butunleme !== '' && results.butunlemeHesap) text += `Yıl Sonu Notu: ${results.butunlemeHesap}\n`;
     text += `Durum: ${results.durum}\n`;
@@ -137,16 +139,21 @@ export default function App() {
     } else { setGrades({ ...grades, [f]: val }); }
   };
 
-  // Kullanıcı mesajını Google Analytics'e gönderir
+  // İsim ve Sınıf verisini mesajla birleştirip Google Analytics'e ileten protokol
   const handleSendFeedback = () => {
     if (!feedbackText.trim()) return;
+    
+    const ad = studentName.trim() || 'İsimsiz';
+    const sinif = studentClass.trim() || 'Belirtilmemiş';
+    const payload = `[${sinif}] ${ad}: ${feedbackText.trim()}`;
+
     if (Platform.OS === 'web' && window.gtag) {
       window.gtag('event', 'user_feedback_text', {
         'event_category': 'Feedback',
-        'event_label': feedbackText.trim(),
+        'event_label': payload,
       });
       alert('Mesajınız başarıyla iletildi. Teşekkür ederiz!');
-      setFeedbackText(''); // Kutuyu temizle
+      setFeedbackText(''); 
     }
   };
 
@@ -155,6 +162,33 @@ export default function App() {
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}><Text style={styles.title}>YDY</Text><Text style={styles.subtitle}>Not Hesaplama Sistemi</Text></View>
+
+        {/* YENİ: ÖĞRENCİ BİLGİLERİ ALANI */}
+        <View style={styles.section}>
+          <Text style={styles.label}>ÖĞRENCİ BİLGİLERİ</Text>
+          <View style={styles.row}>
+            <View style={styles.flex}>
+              <Text style={styles.iL}>Ad Soyad</Text>
+              <TextInput 
+                style={styles.input} 
+                value={studentName} 
+                onChangeText={setStudentName} 
+                placeholder="Örn: Ali Yılmaz" 
+                placeholderTextColor="#475569"
+              />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.iL}>Sınıf</Text>
+              <TextInput 
+                style={styles.input} 
+                value={studentClass} 
+                onChangeText={setStudentClass} 
+                placeholder="Örn: Hazırlık A" 
+                placeholderTextColor="#475569"
+              />
+            </View>
+          </View>
+        </View>
 
         <View style={styles.section}>
           <Text style={styles.label}>KUR SEÇİMİ</Text>
@@ -170,14 +204,14 @@ export default function App() {
         <View style={styles.section}>
           <Text style={styles.label}>QUIZ NOTLARI</Text>
           <View style={styles.grid}>{grades.quiz.map((v, i) => (
-            <View key={`q${i}`} style={styles.item}><Text style={styles.iL}>Quiz {i+1}</Text><TextInput style={styles.input} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('quiz', i, t)} maxLength={3} placeholder="0"/></View>
+            <View key={`q${i}`} style={styles.item}><Text style={styles.iL}>Quiz {i+1}</Text><TextInput style={styles.input} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('quiz', i, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
           ))}</View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.label}>VİZE NOTLARI</Text>
           <View style={styles.grid}>{grades.vize.map((v, i) => (
-            <View key={`v${i}`} style={styles.item}><Text style={styles.iL}>Vize {i+1}</Text><TextInput style={styles.input} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('vize', i, t)} maxLength={3} placeholder="0"/></View>
+            <View key={`v${i}`} style={styles.item}><Text style={styles.iL}>Vize {i+1}</Text><TextInput style={styles.input} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('vize', i, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
           ))}</View>
         </View>
 
@@ -185,14 +219,14 @@ export default function App() {
           <Text style={styles.label}>DİĞER NOTLAR</Text>
           <View style={styles.grid}>
             {[ {k:'writing', l:'Writing'}, {k:'sunum', l:'Sunum'}, {k:'kanaat', l:'Kanaat Notu'}, {k:'odev', l:'Online Ödev'} ].map(i => (
-              <View key={i.k} style={styles.half}><Text style={styles.iL}>{i.l}</Text><TextInput style={styles.input} keyboardType="numeric" value={grades[i.k]} onChangeText={t => handleInputChange(i.k, null, t)} maxLength={3} placeholder="0"/></View>
+              <View key={i.k} style={styles.half}><Text style={styles.iL}>{i.l}</Text><TextInput style={styles.input} keyboardType="numeric" value={grades[i.k]} onChangeText={t => handleInputChange(i.k, null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
             ))}
           </View>
         </View>
 
         <View style={styles.row}>
-          <View style={[styles.section, styles.flex]}><Text style={styles.label}>FİNAL</Text><TextInput style={styles.input} value={grades.final} onChangeText={t => handleInputChange('final', null, t)} maxLength={3} placeholder="0"/></View>
-          <View style={[styles.section, styles.flex]}><Text style={styles.label}>BÜTÜNLEME</Text><TextInput style={styles.input} value={grades.butunleme} onChangeText={t => handleInputChange('butunleme', null, t)} maxLength={3} placeholder="0"/></View>
+          <View style={[styles.section, styles.flex]}><Text style={styles.label}>FİNAL</Text><TextInput style={styles.input} value={grades.final} onChangeText={t => handleInputChange('final', null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
+          <View style={[styles.section, styles.flex]}><Text style={styles.label}>BÜTÜNLEME</Text><TextInput style={styles.input} value={grades.butunleme} onChangeText={t => handleInputChange('butunleme', null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
         </View>
 
         {results && (
@@ -217,11 +251,11 @@ export default function App() {
 
         <View style={styles.footer}><Text style={styles.footerT}>Created by Alparslan Soyak</Text></View>
         
-        {/* Alt panelin ekranı kapatmaması için boşluk */}
-        <View style={{ height: 110 }} /> 
+        {/* Alt panelin imzayı kapatmaması için zemin boşluğu */}
+        <View style={{ height: 120 }} /> 
       </ScrollView>
 
-      {/* SABİT GERİ BİLDİRİM PANELİ - YAZI YAZILABİLİR KUTUCUK */}
+      {/* SABİT GERİ BİLDİRİM PANELİ */}
       <View style={styles.feedbackPanel}>
         <Text style={styles.feedbackTitle}>Fikir, öneri veya sorunlarınızı bizimle paylaşın:</Text>
         <View style={styles.feedbackInputRow}>
@@ -271,8 +305,6 @@ const styles = StyleSheet.create({
   footer: { alignItems: 'center', marginTop: 40, paddingBottom: 20 },
   footerT: { color: '#64748b', fontSize: 16, fontWeight: '700', letterSpacing: 1.5 },
   flex: { flex: 1 },
-
-  /* SABİT YAZI KUTUCUĞU TASARIMI */
   feedbackPanel: {
     position: 'absolute',
     bottom: 0,
