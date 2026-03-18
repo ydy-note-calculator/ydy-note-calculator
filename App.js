@@ -185,8 +185,9 @@ export default function App() {
       
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
+        {/* İŞTE MUTLAK ÇÖZÜM: isMobile mantığı titleCenter'a da uygulandı */}
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
-          <View style={styles.titleCenter}>
+          <View style={[styles.titleCenter, isMobile ? { position: 'relative' } : {}]}>
             <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>YDY</Text>
             <Text style={[styles.subtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
           </View>
@@ -279,7 +280,6 @@ export default function App() {
           <Text style={styles.resetT}>Tüm Notları Sıfırla</Text>
         </TouchableOpacity>
 
-        {/* --- İŞTE ÇÖZÜM: TAM 50 PİKSELLİK NEFES PAYI (marginBottom: 50) --- */}
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
           <View style={styles.feedbackRow}>
@@ -309,8 +309,10 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16 }, 
   
-  headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative', gap: 15 },
+  headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, gap: 15 },
   headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative' },
+  
+  // Z-index ve hizalama korundu
   titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
@@ -353,7 +355,6 @@ const styles = StyleSheet.create({
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
-  // SIFIRLA BUTONUNA 50 PİKSELLİK MARJİN VERİLDİ
   reset: { marginTop: 24, marginBottom: 50, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   
@@ -361,7 +362,7 @@ const styles = StyleSheet.create({
     borderRadius: 16, 
     borderWidth: 1,
     padding: 24,
-    marginTop: 0, // Reset butonunun marjini burayı yeterince itiyor
+    marginTop: 0, 
     marginBottom: 30, 
   },
   feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
