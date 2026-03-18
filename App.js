@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Dimensions, Platform, Linking } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Dimensions, Platform, Linking, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -13,6 +13,9 @@ const THEMES = {
 };
 
 export default function App() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 600; // Ekran radarı: 600px altı mobildir.
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEntered, setIsEntered] = useState(false); 
   
@@ -48,7 +51,6 @@ export default function App() {
 
   useEffect(() => { if (isLoaded) { calculateGrade(); saveData(); } }, [grades, selectedCourse, studentName, studentClassNum, activeTheme]);
 
-  // isEntered durumunu ARTIK KAYDETMİYORUZ. Böylece her açılışta portal ekranı gelir.
   const saveData = async () => {
     try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, studentClassNum, activeTheme })); } catch (e) { console.error(e); }
   };
@@ -59,7 +61,6 @@ export default function App() {
       if (savedData) {
         const parsed = JSON.parse(savedData);
         setGrades(parsed.grades || grades); setSelectedCourse(parsed.selectedCourse || 'A');
-        // İsim ve sınıfı hafızadan çekip kutuları dolduruyoruz:
         setStudentName(parsed.studentName || ''); setStudentClassNum(parsed.studentClassNum || '');
         if (parsed.activeTheme && THEMES[parsed.activeTheme]) setActiveTheme(parsed.activeTheme);
       }
@@ -154,7 +155,8 @@ export default function App() {
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
         <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
         
-        <View style={{position: 'absolute', top: 50, right: 20, flexDirection: 'row', gap: 8}}>
+        {/* Temalar Artık Giriş Kartının Üstünde ve Düzenli */}
+        <View style={{flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 20}}>
           {Object.values(THEMES).map(t => (
             <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
               <Text style={styles.themeIcon}>{t.icon}</Text>
@@ -177,7 +179,8 @@ export default function App() {
             <Text style={styles.loginBtnT}>Sisteme Giriş Yap</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
+        
+        {/* İMZA PORTAL EKRANINDAN SİLİNDİ */}
       </View>
     );
   }
@@ -190,11 +193,28 @@ export default function App() {
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        <View style={styles.headerContainer}>
-          <View style={styles.titleCenter}>
-            <Text style={[styles.title, { color: theme.text }]}>YDY</Text>
+        {/* MOBİL UYUMLU DİNAMİK BAŞLIK RADARI */}
+        <View style={{
+          width: '100%',
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: isMobile ? 'center' : 'flex-end',
+          alignItems: 'center',
+          marginTop: 40,
+          marginBottom: 20,
+          position: 'relative',
+          gap: isMobile ? 15 : 0 // Mobilde aralarını açar
+        }}>
+          {/* Masaüstünde Absolute (Tam Orta), Mobilde Relative (Akışa uygun) */}
+          <View style={{
+            position: isMobile ? 'relative' : 'absolute',
+            left: 0, right: 0,
+            alignItems: 'center',
+            zIndex: -1
+          }}>
+            <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>YDY</Text>
             <Text style={[styles.subtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
           </View>
+          
           <View style={styles.themeSelector}>
             {Object.values(THEMES).map(t => (
               <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
@@ -204,7 +224,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* PARANTEZSİZ, - İLE AYRILMIŞ HOŞ GELDİN PANELİ */}
         <View style={[styles.welcomePanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View>
             <Text style={[styles.welcomeText, { color: theme.textSecondary }]}>Hoş geldin,</Text>
@@ -215,7 +234,6 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        {/* KUR SEÇİMİ İKİNCİ EKRANA TAŞINDI */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>KUR SEÇİMİ</Text>
           <View style={styles.simetricRow}>
@@ -251,7 +269,6 @@ export default function App() {
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
           <View style={styles.simetricRow}>
-            {/* GÜNCELLENMİŞ ETİKETLER */}
             {renderInput('Writing', 'writing')} <View style={styles.gap16} /> {renderInput('Sunum', 'sunum')}
           </View>
           <View style={{height: 16}}/> 
@@ -287,6 +304,7 @@ export default function App() {
         <View style={{ height: 280 }} /> 
       </ScrollView>
 
+      {/* İMZA SADECE BURADA (ANA EKRAN) VAR */}
       <View style={[styles.footerContainer, { backgroundColor: theme.card, borderTopColor: theme.accent }]}>
         <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
         <View style={styles.feedbackRow}>
@@ -303,9 +321,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16 },
   
-  headerContainer: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 20, height: 80, position: 'relative' },
-  titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
-  title: { fontSize: 48, fontWeight: 'bold', letterSpacing: 2, textAlign: 'center' },
+  title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center' },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
   
   themeSelector: { flexDirection: 'row', gap: 8, zIndex: 10 },
