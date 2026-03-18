@@ -13,6 +13,9 @@ const THEMES = {
 };
 
 export default function App() {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isEntered, setIsEntered] = useState(false); 
+  
   const [activeTheme, setActiveTheme] = useState('dark');
   const [studentName, setStudentName] = useState('');
   const [studentClassNum, setStudentClassNum] = useState('');
@@ -24,22 +27,19 @@ export default function App() {
 
   const [results, setResults] = useState(null);
   const [targetNote, setTargetNote] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
 
   const theme = THEMES[activeTheme] || THEMES.dark;
 
   useEffect(() => {
     if (Platform.OS === 'web') {
-      document.title = "YDY Not Hesaplama - Alparslan Soyak";
+      document.title = "YDY Not Hesaplama";
       const metaTags = [
         { property: 'og:title', content: 'YDY Not Hesaplama Sistemi' },
         { property: 'og:description', content: 'Notlarını hesapla, finalde kaç alman gerektiğini öğren!' },
-        { property: 'og:type', content: 'website' },
-        { name: 'author', content: 'Alparslan Soyak' }
+        { property: 'og:type', content: 'website' }
       ];
       metaTags.forEach(tag => { const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); });
-
       const script1 = document.createElement('script'); script1.async = true; script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`; document.head.appendChild(script1);
       const script2 = document.createElement('script'); script2.innerHTML = `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${GA_TRACKING_ID}');`; document.head.appendChild(script2);
     }
@@ -48,6 +48,7 @@ export default function App() {
 
   useEffect(() => { if (isLoaded) { calculateGrade(); saveData(); } }, [grades, selectedCourse, studentName, studentClassNum, activeTheme]);
 
+  // isEntered durumunu ARTIK KAYDETMİYORUZ. Böylece her açılışta portal ekranı gelir.
   const saveData = async () => {
     try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, studentClassNum, activeTheme })); } catch (e) { console.error(e); }
   };
@@ -58,6 +59,7 @@ export default function App() {
       if (savedData) {
         const parsed = JSON.parse(savedData);
         setGrades(parsed.grades || grades); setSelectedCourse(parsed.selectedCourse || 'A');
+        // İsim ve sınıfı hafızadan çekip kutuları dolduruyoruz:
         setStudentName(parsed.studentName || ''); setStudentClassNum(parsed.studentClassNum || '');
         if (parsed.activeTheme && THEMES[parsed.activeTheme]) setActiveTheme(parsed.activeTheme);
       }
@@ -81,10 +83,7 @@ export default function App() {
     } else { setTargetNote(null); }
 
     let res = { ortalama: ort.toFixed(2), durum: '', renk: '', fH: null, bH: null };
-    if (ort >= limit) { 
-        res.durum = 'Geçtiniz ✓'; res.renk = theme.accent; 
-        if (grades.final !== '') res.fH = (parseFloat(grades.final) * 0.6 + ort * 0.4).toFixed(2);
-    }
+    if (ort >= limit) { res.durum = 'Geçtiniz ✓'; res.renk = theme.accent; if (grades.final !== '') res.fH = (parseFloat(grades.final) * 0.6 + ort * 0.4).toFixed(2); }
     else if (grades.final === '') { res.durum = 'Finale Kaldınız'; res.renk = '#ef4444'; }
     else {
       const fS = (parseFloat(grades.final) * 0.6 + ort * 0.4).toFixed(2); res.fH = fS; 
@@ -98,11 +97,19 @@ export default function App() {
     setResults(res);
   };
 
+  const handleLogin = () => {
+    if(!studentName.trim() || !studentClassNum.trim()) {
+      alert("Lütfen adınızı ve sınıf numaranızı giriniz.");
+      return;
+    }
+    setIsEntered(true);
+  };
+
+  const handleLogout = () => { setIsEntered(false); };
+
   const shareOnWhatsApp = () => {
     if (!results) return;
-    const tamSinifAd = studentClassNum ? `${selectedCourse}${studentClassNum}` : '';
-    const kimlik = studentName ? `${studentName} - ` : '';
-    let text = `🚀 ${kimlik}${tamSinifAd} YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
+    let text = `🚀 ${studentName} - ${selectedCourse}${studentClassNum} YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
     if (grades.final !== '' && results.fH && grades.butunleme === '') text += `Yıl Sonu Notu: ${results.fH}\n`;
     if (grades.butunleme !== '' && results.bH) text += `Yıl Sonu Notu: ${results.bH}\n`;
     text += `Durum: ${results.durum}\n`;
@@ -131,15 +138,53 @@ export default function App() {
     return (
       <View style={styles.flexItem}>
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
-        <TextInput 
-          style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: isInvalid(val) ? '#ef4444' : theme.border }]} 
-          keyboardType="numeric" value={val} onChangeText={t => handleInputChange(field, index, t)} maxLength={3} placeholder="0" placeholderTextColor={theme.textSecondary}
-        />
+        <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: isInvalid(val) ? '#ef4444' : theme.border }]} keyboardType="numeric" value={val} onChangeText={t => handleInputChange(field, index, t)} maxLength={3} placeholder="0" placeholderTextColor={theme.textSecondary}/>
         {isInvalid(val) && <Text style={styles.errT}>!</Text>}
       </View>
     );
   };
 
+  if (!isLoaded) return null;
+
+  // ==========================================
+  // 1. KATMAN: GİRİŞ (PORTAL) EKRANI
+  // ==========================================
+  if (!isEntered) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
+        <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
+        
+        <View style={{position: 'absolute', top: 50, right: 20, flexDirection: 'row', gap: 8}}>
+          {Object.values(THEMES).map(t => (
+            <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
+              <Text style={styles.themeIcon}>{t.icon}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={[styles.loginCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.loginTitle, { color: theme.text }]}>YDY</Text>
+          <Text style={[styles.loginSubtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
+
+          <Text style={[styles.label, { color: theme.accent, marginTop: 40 }]}>KİMLİK BİLGİLERİ</Text>
+          <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
+          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]} value={studentName} onChangeText={setStudentName} placeholder="Örn: Alparslan Soyak" placeholderTextColor={theme.textSecondary}/>
+          
+          <Text style={[styles.iL, { color: theme.text }]}>SINIF NUMARASI</Text>
+          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 30 }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} placeholder="Örn: 12" placeholderTextColor={theme.textSecondary} keyboardType="numeric" maxLength={2}/>
+
+          <TouchableOpacity style={[styles.loginBtn, {backgroundColor: theme.accent}]} onPress={handleLogin}>
+            <Text style={styles.loginBtnT}>Sisteme Giriş Yap</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
+      </View>
+    );
+  }
+
+  // ==========================================
+  // 2. KATMAN: ANA HESAPLAMA EKRANI
+  // ==========================================
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
@@ -152,44 +197,36 @@ export default function App() {
           </View>
           <View style={styles.themeSelector}>
             {Object.values(THEMES).map(t => (
-              <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} 
-                style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
+              <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
                 <Text style={styles.themeIcon}>{t.icon}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
+        {/* PARANTEZSİZ, - İLE AYRILMIŞ HOŞ GELDİN PANELİ */}
+        <View style={[styles.welcomePanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View>
+            <Text style={[styles.welcomeText, { color: theme.textSecondary }]}>Hoş geldin,</Text>
+            <Text style={[styles.welcomeName, { color: theme.text }]}>{studentName} <Text style={{color: theme.accent}}>- {selectedCourse}{studentClassNum}</Text></Text>
+          </View>
+          <TouchableOpacity onPress={handleLogout} style={[styles.editBtn, {borderColor: theme.border, backgroundColor: theme.bg}]}>
+            <Text style={{fontSize: 18}}>⚙️</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* KUR SEÇİMİ İKİNCİ EKRANA TAŞINDI */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>KUR SEÇİMİ</Text>
           <View style={styles.simetricRow}>
             {['A', 'B', 'C'].map((k, i) => (
               <React.Fragment key={k}>
-                <TouchableOpacity onPress={() => setSelectedCourse(k)} 
-                  style={[styles.btn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border }]}>
+                <TouchableOpacity onPress={() => setSelectedCourse(k)} style={[styles.btn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border }]}>
                   <Text style={[styles.btnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>{k} KURU</Text>
                 </TouchableOpacity>
                 {i !== 2 && <View style={styles.gap16} />}
               </React.Fragment>
             ))}
-          </View>
-        </View>
-
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>ÖĞRENCİ BİLGİLERİ</Text>
-          <View style={styles.simetricRow}>
-            <View style={styles.flexItem}>
-              <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
-              <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} value={studentName} onChangeText={setStudentName} placeholder="Ali Yılmaz" placeholderTextColor={theme.textSecondary}/>
-            </View>
-            <View style={styles.gap16} /> 
-            <View style={styles.flexItem}>
-              <Text style={[styles.iL, { color: theme.text }]}>SINIF ({selectedCourse})</Text>
-              <View style={[styles.classBox, { backgroundColor: theme.bg, borderColor: theme.border }]}>
-                <Text style={[styles.prefix, { color: theme.text, borderRightColor: theme.border }]}>{selectedCourse}</Text>
-                <TextInput style={[styles.inputNoBorder, { color: theme.text }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} placeholder="12" placeholderTextColor={theme.textSecondary} keyboardType="numeric"/>
-              </View>
-            </View>
           </View>
         </View>
 
@@ -214,11 +251,12 @@ export default function App() {
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
           <View style={styles.simetricRow}>
+            {/* GÜNCELLENMİŞ ETİKETLER */}
             {renderInput('Writing', 'writing')} <View style={styles.gap16} /> {renderInput('Sunum', 'sunum')}
           </View>
           <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
-            {renderInput('Kanaat', 'kanaat')} <View style={styles.gap16} /> {renderInput('Ödev', 'odev')}
+            {renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}
           </View>
         </View>
 
@@ -265,7 +303,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16 },
   
-  headerContainer: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, height: 80, position: 'relative' },
+  headerContainer: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 20, height: 80, position: 'relative' },
   titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontSize: 48, fontWeight: 'bold', letterSpacing: 2, textAlign: 'center' },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
@@ -274,11 +312,21 @@ const styles = StyleSheet.create({
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeIcon: { fontSize: 16 },
 
+  loginCard: { width: '100%', maxWidth: 500, alignSelf: 'center', padding: 30, borderRadius: 24, borderWidth: 1, elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 15 },
+  loginTitle: { fontSize: 56, fontWeight: '900', textAlign: 'center', letterSpacing: 3 },
+  loginSubtitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
+  loginBtn: { padding: 18, borderRadius: 12, alignItems: 'center', marginTop: 10 },
+  loginBtnT: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
+
+  welcomePanel: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 24 },
+  welcomeText: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
+  welcomeName: { fontSize: 18, fontWeight: 'bold' },
+  editBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+
   section: { borderRadius: 16, padding: 18, marginBottom: 16, borderWidth: 1 },
   simetricRow: { flexDirection: 'row', width: '100%' },
   flexItem: { flex: 1 },
-  gap16: { width: 16 }, 
-  gap12: { width: 12 }, 
+  gap16: { width: 16 }, gap12: { width: 12 }, 
   
   label: { fontSize: 12, fontWeight: '800', marginBottom: 14, letterSpacing: 1 },
   iL: { fontSize: 12, marginBottom: 6, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
@@ -287,18 +335,13 @@ const styles = StyleSheet.create({
   errT: { color: '#ef4444', fontSize: 10, marginTop: 4, fontWeight: 'bold', position: 'absolute', bottom: -16 },
   
   btn: { flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', borderWidth: 1 },
-  btnT: { fontWeight: 'bold', fontSize: 13 },
-  
-  classBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, height: 50 },
-  prefix: { paddingHorizontal: 12, fontWeight: 'bold', borderRightWidth: 1 },
-  inputNoBorder: { flex: 1, paddingHorizontal: 10, fontSize: 15 },
+  btnT: { fontWeight: 'bold', fontSize: 15 },
   
   res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginTop: 4 },
   resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
   resN: { fontSize: 32, fontWeight: '900' },
   detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
-  
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
@@ -311,5 +354,5 @@ const styles = StyleSheet.create({
   fInput: { flex: 1, borderRadius: 12, padding: 12, borderWidth: 1, fontSize: 14, height: 80, textAlignVertical: 'top' },
   fSendBtn: { paddingHorizontal: 20, borderRadius: 12, justifyContent: 'center' },
   fSendBtnT: { color: '#fff', fontWeight: 'bold' },
-  footerBrand: { textAlign: 'center', marginTop: 15, color: '#64748b', fontSize: 16, fontWeight: '800', letterSpacing: 1.5 }
+  footerBrand: { textAlign: 'center', marginTop: 20, color: '#64748b', fontSize: 16, fontWeight: '800', letterSpacing: 1.5 }
 });
