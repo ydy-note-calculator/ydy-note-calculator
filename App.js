@@ -3,6 +3,7 @@ import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Dimens
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// SENİN ANALYTICS ID'N (BU NUMARA DOĞRU OLMALI)
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
 const THEMES = {
@@ -44,6 +45,7 @@ export default function App() {
       ];
       metaTags.forEach(tag => { const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); });
 
+      // --- MUTLAK ÇÖZÜM: ZIRHLI ANALYTICS ENTEGRASYONU ---
       if (!document.getElementById('google-analytics')) {
         const script1 = document.createElement('script');
         script1.id = 'google-analytics';
@@ -248,6 +250,8 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
+        {/* ANA EKRANDAN KUR SEÇİMİ SÖKÜLDÜ ( UX GEREĞİ PORTALA TAŞINDI ) */}
+
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
           <View style={styles.simetricRow}>
@@ -273,6 +277,7 @@ export default function App() {
           </View>
           <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
+            {/* ETİKETLER GÜNCELLENDİ (Kanaat Notu, Online Ödev) */}
             {renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}
           </View>
         </View>
@@ -300,22 +305,26 @@ export default function App() {
           </View>
         )}
 
-        <TouchableOpacity style={styles.reset} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
-          <Text style={styles.resetT}>Tüm Notları Sıfırla</Text>
-        </TouchableOpacity>
+        {/* TÜM NOTLARI SIFIRLA BUTONU ENTEGRASYON PANELİNE TAŞINDI */}
 
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          {/* İŞTE ÇÖZÜM: SIFIRLA BUTONU BURAYA GELDİ, ÇOK BÜYÜK OLMAYAN MOR KUTUCUK (image_7.png gibi) */}
+          <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
+            <Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text>
+          </TouchableOpacity>
+
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
           <View style={styles.feedbackRow}>
+            {/* PLACEHOLDER SILINDI */}
             <TextInput 
               style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-              placeholder="Mesajınız..." 
               placeholderTextColor={theme.textSecondary}
               value={feedbackText}
               onChangeText={setFeedbackText}
               maxLength={500}
               multiline={true}
             />
+            {/* Gönder butonu mor */}
             <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
               <Text style={styles.fSendBtnT}>Gönder</Text>
             </TouchableOpacity>
@@ -335,7 +344,6 @@ const styles = StyleSheet.create({
   
   headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, gap: 15 },
   headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative' },
-  
   titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
@@ -382,8 +390,17 @@ const styles = StyleSheet.create({
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
-  reset: { marginTop: 24, marginBottom: 50, padding: 10, alignItems: 'center' },
-  resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
+  // SIFIRLA BUTONU STİLLERİ (image_7.png mor kutucuk gibi)
+  resetBtn: { 
+    width: '100%',
+    padding: 10, // padding azaltıldı
+    borderRadius: 12, 
+    alignItems: 'center', 
+    backgroundColor: '#a855f7', // Mor accent
+    alignSelf: 'center', 
+    marginBottom: 24, // Mesaj etiketi ile boşluk
+  },
+  resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   
   feedbackCard: {
     borderRadius: 16, 
