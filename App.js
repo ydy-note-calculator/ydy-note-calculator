@@ -161,10 +161,10 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>QUİZ NOTLARI</Text>
-          <View style={styles.simetricRow}>{renderInput('QUİZ 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('QUİZ 2', 'quiz', 1)}</View>
+          <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('QUIZ 2', 'quiz', 1)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput('QUİZ 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('QUİZ 4', 'quiz', 3)}</View>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('QUIZ 4', 'quiz', 3)}</View>
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -197,7 +197,6 @@ export default function App() {
           </View>
         )}
 
-        {/* FEEDBACK SECTION WITH UPDATED PLACEHOLDERS */}
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>ÖNERİ VE GERİ BİLDİRİM</Text>
           <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
@@ -243,7 +242,7 @@ const styles = StyleSheet.create({
   kurBtnT: { fontWeight: 'bold', fontSize: 15 },
   iL: { fontSize: 12, marginBottom: 8, fontWeight: '800' },
   input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, textAlign: 'center', minHeight: 50 },
-  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginBottom: 40 },
+  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginBottom: 80 }, // BOŞLUK ARTIRILDI (40 -> 80)
   resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
   resN: { fontSize: 32, fontWeight: '900' },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
