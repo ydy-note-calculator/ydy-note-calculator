@@ -147,7 +147,6 @@ export default function App() {
 
   if (!isLoaded) return null;
 
-  // 1. KATMAN: GİRİŞ (PORTAL) EKRANI
   if (!isEntered) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
@@ -180,12 +179,10 @@ export default function App() {
     );
   }
 
-  // 2. KATMAN: ANA HESAPLAMA EKRANI
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
       
-      {/* İŞTE ÇÖZÜM: GERİ BİLDİRİM VE İMZA ARTIK SCROLLVIEW'UN İÇİNDE */}
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
@@ -282,7 +279,7 @@ export default function App() {
           <Text style={styles.resetT}>Tüm Notları Sıfırla</Text>
         </TouchableOpacity>
 
-        {/* --- BAĞIMSIZ VE ÖZGÜR GERİ BİLDİRİM KARTI --- */}
+        {/* --- İŞTE ÇÖZÜM: TAM 50 PİKSELLİK NEFES PAYI (marginBottom: 50) --- */}
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
           <View style={styles.feedbackRow}>
@@ -301,7 +298,6 @@ export default function App() {
           </View>
         </View>
         
-        {/* --- TAMAMEN BAĞIMSIZ İMZA METNİ --- */}
         <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
 
       </ScrollView>
@@ -311,7 +307,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { padding: 16 }, // PaddingBottom temizlendi, akış doğal bırakıldı
+  scroll: { padding: 16 }, 
   
   headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative', gap: 15 },
   headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative' },
@@ -357,16 +353,16 @@ const styles = StyleSheet.create({
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
-  reset: { marginTop: 20, padding: 10, alignItems: 'center' },
+  // SIFIRLA BUTONUNA 50 PİKSELLİK MARJİN VERİLDİ
+  reset: { marginTop: 24, marginBottom: 50, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   
-  // --- YENİ BAĞIMSIZ GERİ BİLDİRİM KARTI ---
   feedbackCard: {
-    borderRadius: 16, // Tamamen yuvarlak ve bağımsız
+    borderRadius: 16, 
     borderWidth: 1,
     padding: 24,
-    marginTop: 10,
-    marginBottom: 30, // İmza ile olan mesafesini açar
+    marginTop: 0, // Reset butonunun marjini burayı yeterince itiyor
+    marginBottom: 30, 
   },
   feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
   feedbackRow: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
@@ -387,13 +383,12 @@ const styles = StyleSheet.create({
   },
   fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
   
-  // --- TAMAMEN BAĞIMSIZ İMZA METNİ ---
   footerBrand: { 
     textAlign: 'center', 
     color: '#64748b', 
     fontSize: 16, 
     fontWeight: '800', 
     letterSpacing: 2,
-    marginBottom: 20 // Ekranın en altına nefes payı bırakır
+    marginBottom: 20 
   }
 });
