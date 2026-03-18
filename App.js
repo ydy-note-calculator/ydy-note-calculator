@@ -162,7 +162,6 @@ export default function App() {
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        {/* BAŞLIK VE BÜYÜTÜLMÜŞ ALT BAŞLIK */}
         <View style={styles.header}>
           <Text style={styles.title}>YDY</Text>
           <Text style={styles.subtitle}>Not Hesaplama Sistemi</Text>
@@ -170,7 +169,7 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.label}>KUR SEÇİMİ</Text>
-          <View style={styles.row}>
+          <View style={styles.rowCourse}>
             {['A', 'B', 'C'].map(k => (
               <TouchableOpacity key={k} onPress={() => setSelectedCourse(k)} style={[styles.btn, selectedCourse === k && styles.btnActive]}>
                 <Text style={styles.btnT}>{k} KURU</Text>
@@ -181,23 +180,23 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.label}>ÖĞRENCİ BİLGİLERİ</Text>
-          <View style={styles.row}>
+          <View style={styles.rowSplit}>
             <View style={styles.flex}>
               <Text style={styles.iL}>Ad Soyad</Text>
               <TextInput 
-                style={styles.input} 
+                style={styles.inputKimlik} 
                 value={studentName} 
                 onChangeText={setStudentName} 
-                placeholder="Örn: Ali Yılmaz" 
+                placeholder="Ali Yılmaz" 
                 placeholderTextColor="#475569"
               />
             </View>
-            <View style={styles.flex}>
+            <View style={styles.flexSplit}>
               <Text style={styles.iL}>Sınıf (Örn: {selectedCourse}12)</Text>
               <View style={styles.classInputGroup}>
                 <Text style={styles.classInputPrefix}>{selectedCourse}</Text>
                 <TextInput 
-                  style={[styles.input, styles.classInputField]} 
+                  style={[styles.inputKimlik, styles.classInputField]} 
                   value={studentClassNum} 
                   onChangeText={(text) => {
                     const filteredText = text.replace(/[^0-9]/g, '').slice(0, 2);
@@ -216,14 +215,20 @@ export default function App() {
         <View style={styles.section}>
           <Text style={styles.label}>QUIZ NOTLARI</Text>
           <View style={styles.grid}>{grades.quiz.map((v, i) => (
-            <View key={`q${i}`} style={styles.item}><Text style={styles.iL}>Quiz {i+1}</Text><TextInput style={styles.input} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('quiz', i, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
+            <View key={`q${i}`} style={styles.gridItem}>
+              <Text style={styles.iL}>Quiz {i+1}</Text>
+              <TextInput style={styles.inputGrade} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('quiz', i, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/>
+            </View>
           ))}</View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.label}>VİZE NOTLARI</Text>
           <View style={styles.grid}>{grades.vize.map((v, i) => (
-            <View key={`v${i}`} style={styles.item}><Text style={styles.iL}>Vize {i+1}</Text><TextInput style={styles.input} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('vize', i, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
+            <View key={`v${i}`} style={styles.gridItem}>
+              <Text style={styles.iL}>Vize {i+1}</Text>
+              <TextInput style={styles.inputGrade} keyboardType="numeric" value={v} onChangeText={t => handleInputChange('vize', i, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/>
+            </View>
           ))}</View>
         </View>
 
@@ -231,14 +236,17 @@ export default function App() {
           <Text style={styles.label}>DİĞER NOTLAR</Text>
           <View style={styles.grid}>
             {[ {k:'writing', l:'Writing'}, {k:'sunum', l:'Sunum'}, {k:'kanaat', l:'Kanaat Notu'}, {k:'odev', l:'Online Ödev'} ].map(i => (
-              <View key={i.k} style={styles.half}><Text style={styles.iL}>{i.l}</Text><TextInput style={styles.input} keyboardType="numeric" value={grades[i.k]} onChangeText={t => handleInputChange(i.k, null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
+              <View key={i.k} style={styles.gridItemHalf}>
+                <Text style={styles.iL}>{i.l}</Text>
+                <TextInput style={styles.inputGrade} keyboardType="numeric" value={grades[i.k]} onChangeText={t => handleInputChange(i.k, null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/>
+              </View>
             ))}
           </View>
         </View>
 
         <View style={styles.row}>
-          <View style={[styles.section, styles.flex]}><Text style={styles.label}>FİNAL</Text><TextInput style={styles.input} value={grades.final} onChangeText={t => handleInputChange('final', null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
-          <View style={[styles.section, styles.flex]}><Text style={styles.label}>BÜTÜNLEME</Text><TextInput style={styles.input} value={grades.butunleme} onChangeText={t => handleInputChange('butunleme', null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
+          <View style={[styles.sectionGradeKimlik, styles.flex]}><Text style={styles.labelGrade}>FİNAL</Text><TextInput style={styles.inputGradeKimlik} value={grades.final} onChangeText={t => handleInputChange('final', null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
+          <View style={[styles.sectionGradeKimlik, styles.flex]}><Text style={styles.labelGrade}>BÜTÜNLEME</Text><TextInput style={styles.inputGradeKimlik} value={grades.butunleme} onChangeText={t => handleInputChange('butunleme', null, t)} maxLength={3} placeholder="0" placeholderTextColor="#475569"/></View>
         </View>
 
         {results && (
@@ -261,11 +269,11 @@ export default function App() {
 
         <TouchableOpacity style={styles.reset} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
         
-        {/* Alt panel artık daha büyük olduğu için zemindeki boşluğu artırdık */}
-        <View style={{ height: 200 }} /> 
+        {/* Alt panelin ScrollView içeriğini kapatmaması için boşluk (Artırıldı) */}
+        <View style={{ height: 260 }} /> 
       </ScrollView>
 
-      {/* YENİ TASARIM: SABİT GERİ BİLDİRİM PANELİ VE İMZA BİRLEŞTİRİLDİ */}
+      {/* SABİT GERİ BİLDİRİM PANELİ VE İMZA */}
       <View style={styles.feedbackPanelFixed}>
         <Text style={styles.feedbackTitle}>Fikir, öneri veya sorunlarınızı bizimle paylaşın:</Text>
         <View style={styles.feedbackInputRow}>
@@ -295,34 +303,117 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f172a' },
-  scroll: { padding: 16 },
-  header: { alignItems: 'center', marginVertical: 30 },
+  scroll: { 
+    paddingTop: 20,    // Üstten nefes payı
+    paddingBottom: 20, // Alttan nefes payı
+    paddingHorizontal: 16
+  },
+  header: { alignItems: 'center', marginTop: 30, marginBottom: 40 }, // Header boşluğu artırıldı
   title: { fontSize: 44, fontWeight: 'bold', color: '#fff', letterSpacing: 2 },
-  
-  /* BÜYÜTÜLMÜŞ ALT BAŞLIK */
   subtitle: { color: '#c084fc', fontSize: 17, fontWeight: '700', marginTop: 4, letterSpacing: 1 },
   
-  section: { backgroundColor: '#1e293b', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
-  label: { color: '#94a3b8', fontSize: 11, fontWeight: '800', marginBottom: 12, letterSpacing: 1 },
-  row: { flexDirection: 'row', gap: 10 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  item: { width: '22%' },
-  half: { width: '48%' },
-  iL: { color: '#fff', fontSize: 12, marginBottom: 6, fontWeight: '500' },
-  input: { backgroundColor: '#0f172a', borderRadius: 8, padding: 12, color: '#fff', borderWidth: 1, borderColor: '#475569', fontSize: 14, minHeight: 46 },
-  btn: { flex: 1, padding: 12, borderRadius: 10, backgroundColor: '#334155', alignItems: 'center' },
+  /* ANA PANELLER (Bölüm Araları Genişletildi) */
+  section: { 
+    backgroundColor: '#1e293b', 
+    borderRadius: 14, 
+    padding: 20,        // İç boşluk artırıldı
+    marginBottom: 20,   // Paneller arası boşluk artırıldı
+    borderWidth: 1, 
+    borderColor: '#334155',
+    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 // Hafif gölge
+  },
+  label: { 
+    color: '#94a3b8', 
+    fontSize: 11, 
+    fontWeight: '800', 
+    marginBottom: 16,   // Label ile kutular arası boşluk artırıldı
+    letterSpacing: 1,
+    textTransform: 'uppercase'
+  },
+
+  /* SATIR VE GRID SİSTEMLERİ (Aralar Genişletildi) */
+  row: { flexDirection: 'row', gap: 16 }, // gap artırıldı
+  rowCourse: { flexDirection: 'row', gap: 12 }, // Kur butonları arası gap
+  rowSplit: { flexDirection: 'row', gap: 20 }, // Kimlik bilgileri arası gap
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }, // gap artırıldı
+  gridItem: { width: '22%' },
+  gridItemHalf: { width: '47%' }, // Half genişliği gap ile uyumlu hale getirildi
+
+  /* İÇ LABELLAR VE GİRİŞ KUTULARI (Daha Ferah) */
+  iL: { 
+    color: '#fff', 
+    fontSize: 12, 
+    marginBottom: 8,    // Label ile input arası boşluk artırıldı
+    fontWeight: '500' 
+  },
+  
+  /* Giriş Kutuları Stilleri (Ferahlatılmış) */
+  inputGrade: { 
+    backgroundColor: '#0f172a', 
+    borderRadius: 8, 
+    padding: 14,        // İç boşluk artırıldı (daha dolgun kutu)
+    color: '#fff', 
+    borderWidth: 1, 
+    borderColor: '#475569', 
+    fontSize: 14, 
+    minHeight: 50       // Minimum yükseklik artırıldı
+  },
+  inputKimlik: {
+    backgroundColor: '#0f172a', 
+    borderRadius: 8, 
+    padding: 14,
+    color: '#fff', 
+    borderWidth: 1, 
+    borderColor: '#475569', 
+    fontSize: 14, 
+    minHeight: 50
+  },
+
+  /* KUR BUTONLARI (Daha Ferah) */
+  btn: { 
+    flex: 1, 
+    paddingVertical: 14,  // Dikey boşluk artırıldı
+    paddingHorizontal: 12,
+    borderRadius: 10, 
+    backgroundColor: '#334155', 
+    alignItems: 'center' 
+  },
   btnActive: { backgroundColor: '#a855f7' },
   btnT: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  res: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderTopWidth: 4, marginTop: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
-  resSt: { fontWeight: 'bold', fontSize: 18, marginBottom: 4 },
+
+  /* SONUÇ PANELİ (Daha Ferah) */
+  res: { 
+    backgroundColor: '#1e293b', 
+    borderRadius: 16, 
+    padding: 24,        // İç boşluk artırıldı
+    borderTopWidth: 4, 
+    marginTop: 20,      // Üst boşluk artırıldı
+    shadowColor: '#000', 
+    shadowOpacity: 0.3, 
+    shadowRadius: 10, 
+    elevation: 5 
+  },
+  resSt: { fontWeight: 'bold', fontSize: 18, marginBottom: 6 },
   resN: { color: '#fff', fontSize: 28, fontWeight: 'bold' },
-  detailT: { color: '#94a3b8', fontSize: 16, fontWeight: '600', marginTop: 4 },
-  targetT: { fontSize: 14, marginTop: 12, fontWeight: '600' },
-  waBtn: { backgroundColor: '#25D366', marginTop: 20, padding: 14, borderRadius: 10, alignItems: 'center' },
+  detailT: { color: '#94a3b8', fontSize: 16, fontWeight: '600', marginTop: 6 },
+  targetT: { fontSize: 14, marginTop: 16, fontWeight: '600' }, // Hedef not boşluğu artırıldı
+  waBtn: { 
+    backgroundColor: '#25D366', 
+    marginTop: 24,      // Buton üst boşluğu artırıldı
+    padding: 16,        // Buton iç boşluğu artırıldı
+    borderRadius: 10, 
+    alignItems: 'center' 
+  },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  reset: { marginTop: 20, padding: 10, alignItems: 'center' },
+
+  /* SIFIRLA BUTONU */
+  reset: { marginTop: 24, marginBottom: 10, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
+  
   flex: { flex: 1 },
+  flexSplit: { flex: 0.6 }, // Sınıf kutusu daha dar
+
+  /* Sınıf Prefix Giriş Grubu Stilleri */
   classInputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -330,7 +421,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#475569',
-    minHeight: 46
+    minHeight: 50 // Giriş kutusuna uygun yükseklik
   },
   classInputPrefix: {
     color: '#fff',
@@ -348,6 +439,8 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
     flex: 1,
   },
+
+  /* SABİT YAZI KUTUCUĞU TASARIMI (Sticky Bottom) */
   feedbackPanelFixed: {
     position: 'absolute',
     bottom: 0,
@@ -363,10 +456,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 10,
   },
-  feedbackTitle: { color: '#e2e8f0', fontSize: 12, fontWeight: '600', marginBottom: 10 },
+  feedbackTitle: { color: '#e2e8f0', fontSize: 12, fontWeight: '600', marginBottom: 12 },
   feedbackInputRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  
-  /* BÜYÜTÜLMÜŞ MESAJ KUTUSU */
   fInputMultiline: { 
     flex: 1, 
     backgroundColor: '#0f172a', 
@@ -375,11 +466,10 @@ const styles = StyleSheet.create({
     borderRadius: 8, 
     padding: 12, 
     color: '#fff', 
-    fontSize: 15, /* Yazı boyutu büyütüldü */
-    minHeight: 110, /* Kutu yüksekliği belirgin şekilde artırıldı */
+    fontSize: 15, 
+    minHeight: 110, 
     textAlignVertical: 'top' 
   },
-  
   fSendBtn: { 
     backgroundColor: '#a855f7', 
     paddingHorizontal: 16, 
@@ -393,7 +483,7 @@ const styles = StyleSheet.create({
   /* İMZA ALANI (Panel İçine Alındı) */
   footerPanel: {
     alignItems: 'center',
-    marginTop: 18, // Mesaj kutusuyla imza arasına nefes payı
+    marginTop: 18, 
     paddingBottom: 4
   },
   footerT: { 
@@ -401,5 +491,34 @@ const styles = StyleSheet.create({
     fontSize: 15, 
     fontWeight: '700', 
     letterSpacing: 1.5 
+  },
+
+  /* Grade Kimlik Bölümleri İçin Özel Stiller */
+  sectionGradeKimlik: {
+    backgroundColor: '#1e293b', 
+    borderRadius: 14, 
+    padding: 16, 
+    marginBottom: 20, 
+    borderWidth: 1, 
+    borderColor: '#334155',
+    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 2
+  },
+  inputGradeKimlik: {
+    backgroundColor: '#0f172a', 
+    borderRadius: 8, 
+    padding: 12, 
+    color: '#fff', 
+    borderWidth: 1, 
+    borderColor: '#475569', 
+    fontSize: 14, 
+    minHeight: 46
+  },
+  labelGrade: {
+    color: '#94a3b8', 
+    fontSize: 11, 
+    fontWeight: '800', 
+    marginBottom: 12, 
+    letterSpacing: 1,
+    textTransform: 'uppercase'
   }
 });
