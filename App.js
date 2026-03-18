@@ -140,7 +140,6 @@ export default function App() {
     } else { setGrades({ ...grades, [f]: val }); }
   };
 
-  // Google Analytics Veri Gönderimi
   const handleSendFeedback = () => {
     if (!feedbackText.trim()) return;
     
@@ -162,9 +161,13 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}><Text style={styles.title}>YDY</Text><Text style={styles.subtitle}>Not Hesaplama Sistemi</Text></View>
+        
+        {/* BAŞLIK VE BÜYÜTÜLMÜŞ ALT BAŞLIK */}
+        <View style={styles.header}>
+          <Text style={styles.title}>YDY</Text>
+          <Text style={styles.subtitle}>Not Hesaplama Sistemi</Text>
+        </View>
 
-        {/* 1. SIRA: KUR SEÇİMİ (EN ÜSTE ALINDI) */}
         <View style={styles.section}>
           <Text style={styles.label}>KUR SEÇİMİ</Text>
           <View style={styles.row}>
@@ -176,7 +179,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* 2. SIRA: ÖĞRENCİ BİLGİLERİ ALANI */}
         <View style={styles.section}>
           <Text style={styles.label}>ÖĞRENCİ BİLGİLERİ</Text>
           <View style={styles.row}>
@@ -259,12 +261,11 @@ export default function App() {
 
         <TouchableOpacity style={styles.reset} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
         
-        <View style={styles.footer}><Text style={styles.footerT}>Created by Alparslan Soyak</Text></View>
-        
-        <View style={{ height: 160 }} /> 
+        {/* Alt panel artık daha büyük olduğu için zemindeki boşluğu artırdık */}
+        <View style={{ height: 200 }} /> 
       </ScrollView>
 
-      {/* SABİT GERİ BİLDİRİM PANELİ */}
+      {/* YENİ TASARIM: SABİT GERİ BİLDİRİM PANELİ VE İMZA BİRLEŞTİRİLDİ */}
       <View style={styles.feedbackPanelFixed}>
         <Text style={styles.feedbackTitle}>Fikir, öneri veya sorunlarınızı bizimle paylaşın:</Text>
         <View style={styles.feedbackInputRow}>
@@ -276,11 +277,16 @@ export default function App() {
             onChangeText={setFeedbackText}
             maxLength={500}
             multiline={true}
-            numberOfLines={3} 
+            numberOfLines={4} 
           />
           <TouchableOpacity style={styles.fSendBtn} onPress={handleSendFeedback}>
             <Text style={styles.fSendBtnT}>Gönder</Text>
           </TouchableOpacity>
+        </View>
+        
+        {/* İMZA ARTIK MESAJ KUTUSUNUN ALTINDA VE SABİT */}
+        <View style={styles.footerPanel}>
+          <Text style={styles.footerT}>Created by Alparslan Soyak</Text>
         </View>
       </View>
     </View>
@@ -292,7 +298,10 @@ const styles = StyleSheet.create({
   scroll: { padding: 16 },
   header: { alignItems: 'center', marginVertical: 30 },
   title: { fontSize: 44, fontWeight: 'bold', color: '#fff', letterSpacing: 2 },
-  subtitle: { color: '#c084fc', fontSize: 13, fontWeight: '500' },
+  
+  /* BÜYÜTÜLMÜŞ ALT BAŞLIK */
+  subtitle: { color: '#c084fc', fontSize: 17, fontWeight: '700', marginTop: 4, letterSpacing: 1 },
+  
   section: { backgroundColor: '#1e293b', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
   label: { color: '#94a3b8', fontSize: 11, fontWeight: '800', marginBottom: 12, letterSpacing: 1 },
   row: { flexDirection: 'row', gap: 10 },
@@ -313,8 +322,6 @@ const styles = StyleSheet.create({
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   reset: { marginTop: 20, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
-  footer: { alignItems: 'center', marginTop: 40, paddingBottom: 20 },
-  footerT: { color: '#64748b', fontSize: 16, fontWeight: '700', letterSpacing: 1.5 },
   flex: { flex: 1 },
   classInputGroup: {
     flexDirection: 'row',
@@ -358,6 +365,8 @@ const styles = StyleSheet.create({
   },
   feedbackTitle: { color: '#e2e8f0', fontSize: 12, fontWeight: '600', marginBottom: 10 },
   feedbackInputRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  
+  /* BÜYÜTÜLMÜŞ MESAJ KUTUSU */
   fInputMultiline: { 
     flex: 1, 
     backgroundColor: '#0f172a', 
@@ -366,10 +375,11 @@ const styles = StyleSheet.create({
     borderRadius: 8, 
     padding: 12, 
     color: '#fff', 
-    fontSize: 13,
-    minHeight: 70, 
+    fontSize: 15, /* Yazı boyutu büyütüldü */
+    minHeight: 110, /* Kutu yüksekliği belirgin şekilde artırıldı */
     textAlignVertical: 'top' 
   },
+  
   fSendBtn: { 
     backgroundColor: '#a855f7', 
     paddingHorizontal: 16, 
@@ -378,5 +388,18 @@ const styles = StyleSheet.create({
     minHeight: 46, 
     marginTop: 'auto' 
   },
-  fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 13 }
+  fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
+  
+  /* İMZA ALANI (Panel İçine Alındı) */
+  footerPanel: {
+    alignItems: 'center',
+    marginTop: 18, // Mesaj kutusuyla imza arasına nefes payı
+    paddingBottom: 4
+  },
+  footerT: { 
+    color: '#64748b', 
+    fontSize: 15, 
+    fontWeight: '700', 
+    letterSpacing: 1.5 
+  }
 });
