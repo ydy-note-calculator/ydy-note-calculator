@@ -250,8 +250,6 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        {/* ANA EKRANDAN KUR SEÇİMİ SÖKÜLDÜ ( UX GEREĞİ PORTALA TAŞINDI ) */}
-
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
           <View style={styles.simetricRow}>
@@ -277,7 +275,6 @@ export default function App() {
           </View>
           <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
-            {/* ETİKETLER GÜNCELLENDİ (Kanaat Notu, Online Ödev) */}
             {renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}
           </View>
         </View>
@@ -308,14 +305,13 @@ export default function App() {
         {/* TÜM NOTLARI SIFIRLA BUTONU ENTEGRASYON PANELİNE TAŞINDI */}
 
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          {/* İŞTE ÇÖZÜM: SIFIRLA BUTONU BURAYA GELDİ, ÇOK BÜYÜK OLMAYAN KIRMIZI KUTUCUK (image_7.png gibi) */}
+          {/* İŞTE ÇÖZÜM: SIFIRLA BUTONU BURAYA GELDİ, KIRMIZI KUTUCUK (image_9.png gibi) */}
           <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
             <Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text>
           </TouchableOpacity>
 
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
-          <View style={styles.feedbackRow}>
-            {/* PLACEHOLDER SILINDI */}
+          <View style={styles.feedbackInputGroup}>
             <TextInput 
               style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
               placeholderTextColor={theme.textSecondary}
@@ -324,14 +320,14 @@ export default function App() {
               maxLength={500}
               multiline={true}
             />
-            {/* Gönder butonu accent rengi kalmaya devam ediyor */}
+            {/* Gönder butonu mor */}
             <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
               <Text style={styles.fSendBtnT}>Gönder</Text>
             </TouchableOpacity>
           </View>
         </View>
         
-        {/* İŞTE ÇÖZÜM: created by alparslan yazısı küçüldü ( fontSize: 13, marginTop: 15) */}
+        {/* İŞTE ÇÖZÜM: Karakter aralığı (letterSpacing: 0.5) standarda çekildi */}
         <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
 
       </ScrollView>
@@ -345,6 +341,7 @@ const styles = StyleSheet.create({
   
   headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, gap: 15 },
   headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative' },
+  
   titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
@@ -391,39 +388,40 @@ const styles = StyleSheet.create({
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
-  // SIFIRLA BUTONU STİLLERİ (Artık Kırmızı: #ef4444, çok büyük olmayan)
+  // SIFIRLA BUTONU STİLLERİ ( image_9.png gibi kırmızı kutucuk )
   resetBtn: { 
     width: '100%',
-    padding: 10, 
+    padding: 10, // padding azaltıldı
     borderRadius: 12, 
     alignItems: 'center', 
-    backgroundColor: '#ef4444', 
+    backgroundColor: '#ef4444', // Kırmızı accent
     alignSelf: 'center', 
     marginBottom: 24, // Mesaj etiketi ile boşluk
   },
   resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   
-  // İŞTE ÇÖZÜM: Kutucuklar birleşmişti, buraya düzen geldi (padding: 30)
+  // İŞTE ÇÖZÜM: Kutucuklar birleşmişti, buraya düzen geldi ( bağımsız öğeler )
   feedbackCard: {
     borderRadius: 16, 
     borderWidth: 1,
-    padding: 30, // Kartın kendi iç boşluğu arttı
+    padding: 16, // Karmaşıklığı azaltmak için iç boşluk azaltıldı
     marginTop: 0, 
     marginBottom: 30, 
   },
   
-  // İŞTE ÇÖZÜM: Başlık ile kutu arasına boşluk (marginBottom: 10)
   feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
-  feedbackRow: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
   
-  // İŞTE ÇÖZÜM: Mesaj kutusu büyüdü (minHeight: 130)
+  // İŞTE ÇÖZÜM: Yatay Geri Bildirim Formu ( TextInput ve Düğme yan yana )
+  feedbackInputGroup: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
+  
+  // İŞTE ÇÖZÜM: Mesaj kutusu bağımsız ( image_1.png/image_9.png gibi )
   fInputMultiline: { 
     flex: 1, 
     borderWidth: 1, 
     borderRadius: 12, 
     padding: 16, 
     fontSize: 15,
-    minHeight: 130, // Kutu daha derin
+    minHeight: 130, // image_7.png UX notuna göre daha derin kutu
     textAlignVertical: 'top'
   },
   fSendBtn: { 
@@ -434,13 +432,13 @@ const styles = StyleSheet.create({
   },
   fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
   
-  // İŞTE ÇÖZÜM: created by alparslan yazısı küçüldü ( fontSize: 13, marginTop: 15, rengi sönükleşti)
+  // İŞTE ÇÖZÜM: Karakter aralığı (letterSpacing: 0.5) standarda çekildi
   footerBrand: { 
     textAlign: 'center', 
-    color: '#94a3b8', // Daha sönük bir renk
-    fontSize: 13, // Boyut 16'dan 13'e düştü
+    color: '#64748b', 
+    fontSize: 16, 
     fontWeight: '800', 
-    letterSpacing: 2,
+    letterSpacing: 0.5, // 2'den 0.5'e çekildi
     marginTop: 15, // Kart bittikten sonra nefes payı
     marginBottom: 20 
   }
