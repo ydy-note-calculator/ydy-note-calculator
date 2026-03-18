@@ -99,6 +99,19 @@ export default function App() {
     setResults(res);
   };
 
+  const shareOnWhatsApp = () => {
+    if (!results) return;
+    const tamSinifAd = studentClassNum ? `${selectedCourse}${studentClassNum}` : '';
+    const kimlik = studentName ? `${studentName} - ` : '';
+    let text = `🚀 ${kimlik}${tamSinifAd} YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
+    if (grades.final !== '' && results.fH && grades.butunleme === '') text += `Yıl Sonu Notu: ${results.fH}\n`;
+    if (grades.butunleme !== '' && results.bH) text += `Yıl Sonu Notu: ${results.bH}\n`;
+    text += `Durum: ${results.durum}\n`;
+    if (targetNote) text += `Hedef: ${targetNote.text}\n`;
+    text += `\nUygulama: ${window.location.href}`;
+    Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
+  };
+
   const handleInputChange = (f, i, v) => {
     const val = v === '' ? '' : v.replace(/[^0-9]/g, '');
     if (Array.isArray(grades[f])) { const n = [...grades[f]]; n[i] = val; setGrades({ ...grades, [f]: n }); } 
@@ -114,7 +127,6 @@ export default function App() {
     alert('Mesajınız başarıyla iletildi!'); setFeedbackText(''); 
   };
 
-  // SİMETRİ MOTORU: Input oluşturucu yardımcı fonksiyon
   const renderInput = (label, field, index = null) => {
     const val = index !== null ? grades[field][index] : grades[field];
     return (
@@ -134,7 +146,6 @@ export default function App() {
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
       <ScrollView contentContainerStyle={styles.scroll}>
         
-        {/* HEADER & TEMA SEÇİCİ */}
         <View style={styles.headerRow}>
           <View>
             <Text style={[styles.title, { color: theme.text }]}>YDY</Text>
@@ -150,7 +161,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* KUR SEÇİMİ */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>KUR SEÇİMİ</Text>
           <View style={styles.simetricRow}>
@@ -166,7 +176,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* ÖĞRENCİ BİLGİLERİ (KUSURSUZ SİMETRİ) */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>ÖĞRENCİ BİLGİLERİ</Text>
           <View style={styles.simetricRow}>
@@ -174,7 +183,7 @@ export default function App() {
               <Text style={[styles.iL, { color: theme.text }]}>Ad Soyad</Text>
               <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} value={studentName} onChangeText={setStudentName} placeholder="Ali Yılmaz" placeholderTextColor={theme.textSecondary}/>
             </View>
-            <View style={styles.gap16} /> {/* ANA SİMETRİ ÇİZGİSİ */}
+            <View style={styles.gap16} /> 
             <View style={styles.flexItem}>
               <Text style={[styles.iL, { color: theme.text }]}>Sınıf (Örn: {selectedCourse}12)</Text>
               <View style={[styles.classBox, { backgroundColor: theme.bg, borderColor: theme.border }]}>
@@ -185,56 +194,56 @@ export default function App() {
           </View>
         </View>
 
-        {/* QUIZ NOTLARI (4'LÜ KUSURSUZ SİMETRİ) */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
           <View style={styles.simetricRow}>
             <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Q1', 'quiz', 0)}<View style={styles.gap12} />{renderInput('Q2', 'quiz', 1)}</View></View>
-            <View style={styles.gap16} /> {/* ANA SİMETRİ ÇİZGİSİ */}
+            <View style={styles.gap16} /> 
             <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Q3', 'quiz', 2)}<View style={styles.gap12} />{renderInput('Q4', 'quiz', 3)}</View></View>
           </View>
         </View>
 
-        {/* VİZE NOTLARI (4'LÜ KUSURSUZ SİMETRİ) */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>VİZE NOTLARI</Text>
           <View style={styles.simetricRow}>
             <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('V1', 'vize', 0)}<View style={styles.gap12} />{renderInput('V2', 'vize', 1)}</View></View>
-            <View style={styles.gap16} /> {/* ANA SİMETRİ ÇİZGİSİ */}
+            <View style={styles.gap16} /> 
             <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('V3', 'vize', 2)}<View style={styles.gap12} />{renderInput('V4', 'vize', 3)}</View></View>
           </View>
         </View>
 
-        {/* DİĞER NOTLAR (2X2 KUSURSUZ SİMETRİ) */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
           <View style={styles.simetricRow}>
             {renderInput('Writing', 'writing')} <View style={styles.gap16} /> {renderInput('Sunum', 'sunum')}
           </View>
-          <View style={{height: 16}}/> {/* Satır arası boşluk */}
+          <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
             {renderInput('Kanaat', 'kanaat')} <View style={styles.gap16} /> {renderInput('Ödev', 'odev')}
           </View>
         </View>
 
-        {/* FİNAL / BÜTÜNLEME */}
         <View style={styles.simetricRow}>
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
              {renderInput('FİNAL', 'final')}
           </View>
-          <View style={styles.gap16} /> {/* ANA SİMETRİ ÇİZGİSİ */}
+          <View style={styles.gap16} /> 
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
              {renderInput('BÜTÜNLEME', 'butunleme')}
           </View>
         </View>
 
-        {/* SONUÇ ALANI */}
         {results && (
           <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
             <Text style={[styles.resN, { color: theme.text }]}>Ort: {results.ortalama}</Text>
             {results.fH && <Text style={[styles.detailT, {color: theme.textSecondary}]}>Yıl Sonu: {results.fH}</Text>}
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
+            
+            {/* WHATSAPP BUTONU RESTORE EDİLDİ */}
+            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}>
+              <Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -242,7 +251,6 @@ export default function App() {
         <View style={{ height: 280 }} /> 
       </ScrollView>
 
-      {/* SABİT ALT PANEL */}
       <View style={[styles.footerContainer, { backgroundColor: theme.card, borderTopColor: theme.accent }]}>
         <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
         <View style={styles.feedbackRow}>
@@ -262,17 +270,15 @@ const styles = StyleSheet.create({
   title: { fontSize: 48, fontWeight: 'bold', letterSpacing: 2 },
   subtitle: { fontSize: 18, fontWeight: '700' },
   
-  /* TEMA SEÇİCİ */
   themeSelector: { flexDirection: 'row', gap: 8 },
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeIcon: { fontSize: 16 },
 
-  /* KUSURSUZ SİMETRİ İSKELETİ */
   section: { borderRadius: 16, padding: 18, marginBottom: 16, borderWidth: 1 },
   simetricRow: { flexDirection: 'row', width: '100%' },
   flexItem: { flex: 1 },
-  gap16: { width: 16 }, // Ana orta çizgi hizalayıcısı
-  gap12: { width: 12 }, // İç eleman boşlukları
+  gap16: { width: 16 }, 
+  gap12: { width: 12 }, 
   
   label: { fontSize: 12, fontWeight: '800', marginBottom: 14, letterSpacing: 1 },
   iL: { fontSize: 12, marginBottom: 6, fontWeight: '600', textTransform: 'uppercase' },
@@ -292,6 +298,10 @@ const styles = StyleSheet.create({
   resN: { fontSize: 32, fontWeight: '900' },
   detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
+  
+  // WHATSAPP STİLLERİ RESTORE EDİLDİ
+  waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
+  waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
   reset: { marginTop: 20, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
