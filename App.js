@@ -176,7 +176,7 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>KİMLİK</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>ÖĞRENCİ BİLGİLERİ</Text>
           <View style={styles.simetricRow}>
             <View style={styles.flexItem}>
               <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
@@ -194,48 +194,48 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>QUIZ (Q)</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
           <View style={styles.simetricRow}>
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Q1', 'quiz', 0)}<View style={styles.gap12} />{renderInput('Q2', 'quiz', 1)}</View></View>
+            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 1', 'quiz', 0)}<View style={styles.gap12} />{renderInput('Quiz 2', 'quiz', 1)}</View></View>
             <View style={styles.gap16} /> 
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Q3', 'quiz', 2)}<View style={styles.gap12} />{renderInput('Q4', 'quiz', 3)}</View></View>
+            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 3', 'quiz', 2)}<View style={styles.gap12} />{renderInput('Quiz 4', 'quiz', 3)}</View></View>
           </View>
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>VİZE (V)</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>VİZE NOTLARI</Text>
           <View style={styles.simetricRow}>
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('V1', 'vize', 0)}<View style={styles.gap12} />{renderInput('V2', 'vize', 1)}</View></View>
+            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Vize 1', 'vize', 0)}<View style={styles.gap12} />{renderInput('Vize 2', 'vize', 1)}</View></View>
             <View style={styles.gap16} /> 
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('V3', 'vize', 2)}<View style={styles.gap12} />{renderInput('V4', 'vize', 3)}</View></View>
+            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Vize 3', 'vize', 2)}<View style={styles.gap12} />{renderInput('Vize 4', 'vize', 3)}</View></View>
           </View>
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>EKSTRA</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
           <View style={styles.simetricRow}>
-            {renderInput('WRT', 'writing')} <View style={styles.gap16} /> {renderInput('SNM', 'sunum')}
+            {renderInput('Writing', 'writing')} <View style={styles.gap16} /> {renderInput('Sunum', 'sunum')}
           </View>
           <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
-            {renderInput('KNT', 'kanaat')} <View style={styles.gap16} /> {renderInput('ÖDV', 'odev')}
+            {renderInput('Kanaat', 'kanaat')} <View style={styles.gap16} /> {renderInput('Ödev', 'odev')}
           </View>
         </View>
 
         <View style={styles.simetricRow}>
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-             {renderInput('FİN', 'final')}
+             {renderInput('FİNAL', 'final')}
           </View>
           <View style={styles.gap16} /> 
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-             {renderInput('BÜT', 'butunleme')}
+             {renderInput('BÜTÜNLEME', 'butunleme')}
           </View>
         </View>
 
         {results && (
           <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
-            <Text style={[styles.resN, { color: theme.text }]}>Ort: {results.ortalama}</Text>
+            <Text style={[styles.resN, { color: theme.text }]}>Ortalama: {results.ortalama}</Text>
             {results.fH && <Text style={[styles.detailT, {color: theme.textSecondary}]}>Yıl Sonu: {results.fH}</Text>}
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
             
