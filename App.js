@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
-// MULTI-THEME SİSTEMİ
 const THEMES = {
   dark: { id: 'dark', icon: '🌙', bg: '#0f172a', card: '#1e293b', text: '#ffffff', textSecondary: '#94a3b8', border: '#334155', accent: '#a855f7' },
   light: { id: 'light', icon: '☀️', bg: '#f8fafc', card: '#ffffff', text: '#1e293b', textSecondary: '#64748b', border: '#e2e8f0', accent: '#a855f7' },
@@ -20,7 +19,7 @@ export default function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEntered, setIsEntered] = useState(false); 
   
-  const [activeTheme, setActiveTheme] = useState('dark'); 
+  const [activeTheme, setActiveTheme] = useState('hacker'); 
   const [studentName, setStudentName] = useState('');
   const [studentClassNum, setStudentClassNum] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('A');
@@ -33,21 +32,17 @@ export default function App() {
   const [targetNote, setTargetNote] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
 
-  const theme = THEMES[activeTheme] || THEMES.dark;
+  const theme = THEMES[activeTheme] || THEMES.hacker;
 
   useEffect(() => {
     if (Platform.OS === 'web') {
-      // META TAGS & SEO
       document.title = "YDY Not Hesaplama - Alparslan Soyak";
       const metaTags = [
         { property: 'og:title', content: 'YDY Not Hesaplama Sistemi' },
         { property: 'og:description', content: 'Notlarını hesapla, finalde kaç alman gerektiğini öğren!' },
-        { property: 'og:type', content: 'website' },
-        { name: 'author', content: 'Alparslan Soyak' }
+        { property: 'og:type', content: 'website' }
       ];
       metaTags.forEach(tag => { const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); });
-
-      // GOOGLE ANALYTICS
       const script1 = document.createElement('script'); script1.async = true; script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`; document.head.appendChild(script1);
       const script2 = document.createElement('script'); script2.innerHTML = `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${GA_TRACKING_ID}');`; document.head.appendChild(script2);
     }
@@ -152,9 +147,7 @@ export default function App() {
 
   if (!isLoaded) return null;
 
-  // ==========================================
   // 1. KATMAN: GİRİŞ (PORTAL) EKRANI
-  // ==========================================
   if (!isEntered) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
@@ -187,22 +180,19 @@ export default function App() {
     );
   }
 
-  // ==========================================
   // 2. KATMAN: ANA HESAPLAMA EKRANI
-  // ==========================================
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
       
+      {/* İŞTE ÇÖZÜM: GERİ BİLDİRİM VE İMZA ARTIK SCROLLVIEW'UN İÇİNDE */}
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        {/* MOBİL UYUMLU DİNAMİK BAŞLIK VE TEMA SEÇİCİ */}
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
           <View style={styles.titleCenter}>
             <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>YDY</Text>
             <Text style={[styles.subtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
           </View>
-          
           <View style={styles.themeSelector}>
             {Object.values(THEMES).map(t => (
               <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
@@ -212,7 +202,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* PARANTEZSİZ, - İLE AYRILMIŞ HOŞ GELDİN PANELİ */}
         <View style={[styles.welcomePanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View>
             <Text style={[styles.welcomeText, { color: theme.textSecondary }]}>Hoş geldin,</Text>
@@ -223,7 +212,6 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        {/* KUR SEÇİMİ İKİNCİ EKRANDA */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>KUR SEÇİMİ</Text>
           <View style={styles.simetricRow}>
@@ -238,7 +226,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* QUIZ NOTLARI (4'LÜ KUSURSUZ SİMETRİ) */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
           <View style={styles.simetricRow}>
@@ -248,7 +235,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* VİZE NOTLARI (4'LÜ KUSURSUZ SİMETRİ) */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>VİZE NOTLARI</Text>
           <View style={styles.simetricRow}>
@@ -258,7 +244,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* DİĞER NOTLAR (2X2 KUSURSUZ SİMETRİ) */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
           <View style={styles.simetricRow}>
@@ -266,12 +251,10 @@ export default function App() {
           </View>
           <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
-            {/* ETİKETLER GÜNCELLENDİ (Kanaat Notu, Online Ödev) */}
             {renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}
           </View>
         </View>
 
-        {/* FİNAL / BÜTÜNLEME */}
         <View style={styles.simetricRow}>
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
              {renderInput('FİNAL', 'final')}
@@ -299,44 +282,39 @@ export default function App() {
           <Text style={styles.resetT}>Tüm Notları Sıfırla</Text>
         </TouchableOpacity>
 
-        {/* İŞTE ÇÖZÜM: 40 piksellik görünmez kalkan eklendi */}
-        <View style={styles.spacer} /> 
-      </ScrollView>
-
-      {/* --- ALT PANEL: GERİ BİLDİRİM VE BAĞIMSIZ İMZA --- */}
-      <View style={[styles.footerPanel, { backgroundColor: theme.card, borderTopColor: theme.accent }]}>
-        <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
-        <View style={styles.feedbackRow}>
-          <TextInput 
-            style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-            placeholder="Mesajınız..." 
-            placeholderTextColor={theme.textSecondary}
-            value={feedbackText}
-            onChangeText={setFeedbackText}
-            maxLength={500}
-            multiline={true}
-          />
-          <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
-            <Text style={styles.fSendBtnT}>Gönder</Text>
-          </TouchableOpacity>
+        {/* --- BAĞIMSIZ VE ÖZGÜR GERİ BİLDİRİM KARTI --- */}
+        <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
+          <View style={styles.feedbackRow}>
+            <TextInput 
+              style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
+              placeholder="Mesajınız..." 
+              placeholderTextColor={theme.textSecondary}
+              value={feedbackText}
+              onChangeText={setFeedbackText}
+              maxLength={500}
+              multiline={true}
+            />
+            <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
+              <Text style={styles.fSendBtnT}>Gönder</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         
-        {/* İMZA ARTIK MESAJ KUTUSUNUN DIŞINDA VE BAĞIMSIZ */}
+        {/* --- TAMAMEN BAĞIMSIZ İMZA METNİ --- */}
         <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
-      </View>
+
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  // ScrollView'un sonuna boşluk eklendi (spacer için)
-  scroll: { padding: 16, paddingBottom: 40 },
+  scroll: { padding: 16 }, // PaddingBottom temizlendi, akış doğal bırakıldı
   
-  // DİNAMİK BAŞLIK STİLLERİ
   headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative', gap: 15 },
-  headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, height: 100, position: 'relative' },
-  
+  headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative' },
   titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
@@ -356,10 +334,7 @@ const styles = StyleSheet.create({
   welcomeName: { fontSize: 18, fontWeight: 'bold' },
   editBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
 
-  // Kutucuklar arasındaki boşluk artırıldı (marginBottom: 24)
   section: { borderRadius: 16, padding: 18, marginBottom: 24, borderWidth: 1 },
-  
-  // SİMETRİ İÇİN DİKEY GAP (gap16)
   simetricRow: { flexDirection: 'row', width: '100%' },
   flexItem: { flex: 1 },
   gap16: { width: 16, height: 16 }, 
@@ -385,21 +360,14 @@ const styles = StyleSheet.create({
   reset: { marginTop: 20, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   
-  // ÇİZGİ ALTI BOŞLUĞU İÇİN SPACER (height: 40)
-  spacer: { height: 40 },
-  
-  // ALT PANEL TASARIMI (Geri Bildirim)
-  footerPanel: {
-    width: '100%',
-    padding: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    elevation: 10, 
-    borderTopWidth: 2,
-    marginTop: 'auto' // Paneli en alta iter
+  // --- YENİ BAĞIMSIZ GERİ BİLDİRİM KARTI ---
+  feedbackCard: {
+    borderRadius: 16, // Tamamen yuvarlak ve bağımsız
+    borderWidth: 1,
+    padding: 24,
+    marginTop: 10,
+    marginBottom: 30, // İmza ile olan mesafesini açar
   },
-  
-  // Mesaj kutusu ve metni büyütüldü
   feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
   feedbackRow: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
   fInputMultiline: { 
@@ -408,7 +376,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, 
     padding: 16, 
     fontSize: 15,
-    minHeight: 100, // Kutu büyütüldü
+    minHeight: 100, 
     textAlignVertical: 'top'
   },
   fSendBtn: { 
@@ -419,13 +387,13 @@ const styles = StyleSheet.create({
   },
   fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
   
-  // BAĞIMSIZ İMZA STİLİ (created yazısı)
+  // --- TAMAMEN BAĞIMSIZ İMZA METNİ ---
   footerBrand: { 
     textAlign: 'center', 
-    marginTop: 20, 
     color: '#64748b', 
     fontSize: 16, 
     fontWeight: '800', 
-    letterSpacing: 2 
+    letterSpacing: 2,
+    marginBottom: 20 // Ekranın en altına nefes payı bırakır
   }
 });
