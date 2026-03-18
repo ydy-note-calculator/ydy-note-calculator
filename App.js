@@ -144,10 +144,11 @@ export default function App() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        <View style={styles.headerRow}>
-          <View>
+        {/* KUSURSUZ MERKEZLENMİŞ BAŞLIK VE SAĞA YASLI TEMA BUTONLARI */}
+        <View style={styles.headerContainer}>
+          <View style={styles.titleCenter}>
             <Text style={[styles.title, { color: theme.text }]}>YDY</Text>
             <Text style={[styles.subtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
           </View>
@@ -240,7 +241,6 @@ export default function App() {
             {results.fH && <Text style={[styles.detailT, {color: theme.textSecondary}]}>Yıl Sonu: {results.fH}</Text>}
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
             
-            {/* WHATSAPP BUTONU RESTORE EDİLDİ */}
             <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}>
               <Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text>
             </TouchableOpacity>
@@ -266,11 +266,29 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 30 },
-  title: { fontSize: 48, fontWeight: 'bold', letterSpacing: 2 },
-  subtitle: { fontSize: 18, fontWeight: '700' },
   
-  themeSelector: { flexDirection: 'row', gap: 8 },
+  /* BAŞLIK MERKEZLEME VE İKONLAR İÇİN YENİ MİMARİ */
+  headerContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end', // İkonları en sağa yaslar
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 30,
+    height: 80, // Absolute elemanlar için yükseklik referansı
+    position: 'relative',
+  },
+  titleCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center', // Başlığı tam ekran ortasına çiviler
+    zIndex: -1, // İkonların tıklanabilirliğini engellememesi için
+  },
+  title: { fontSize: 48, fontWeight: 'bold', letterSpacing: 2, textAlign: 'center' },
+  subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  
+  themeSelector: { flexDirection: 'row', gap: 8, zIndex: 10 },
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeIcon: { fontSize: 16 },
 
@@ -299,7 +317,6 @@ const styles = StyleSheet.create({
   detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
   
-  // WHATSAPP STİLLERİ RESTORE EDİLDİ
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
