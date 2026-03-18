@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Dimensions, Platform, Linking, useWindowDimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Dimensions, Platform, Linking, useWindowDimensions, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// SENİN ANALYTICS ID'N
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
 const THEMES = {
@@ -33,31 +34,67 @@ export default function App() {
 
   const theme = THEMES[activeTheme] || THEMES.hacker;
 
-  const setupAnalytics = () => {
-    if (Platform.OS === 'web' && !document.getElementById('google-analytics')) {
-      const script1 = document.createElement('script');
-      script1.id = 'google-analytics'; script1.async = true;
-      script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
-      document.head.appendChild(script1);
-      const script2 = document.createElement('script');
-      script2.id = 'google-analytics-config';
-      script2.innerHTML = `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${GA_TRACKING_ID}', { 'send_page_view': true });`;
-      document.head.appendChild(script2);
+  // ANİMASYON MOTORU (Asil ve Tok Görünüm İçin)
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+
+  // HAYALET PWA VE ANALYTICS PROTOKOLÜ
+  const setupWebEnvironment = () => {
+    if (Platform.OS === 'web') {
+      document.title = "YDY Not Hesaplama - Alparslan Soyak";
+      
+      // 1. Meta Etiketleri
+      const metaTags = [
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-title', content: 'YDY Hesapla' },
+        { name: 'theme-color', content: '#000000' }
+      ];
+      metaTags.forEach(tag => { 
+        if (!document.querySelector(`meta[name="${tag.name}"]`)) {
+          const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); 
+        }
+      });
+
+      // 2. Dinamik PWA Manifestosu (Dosyasız Kurulum Modülü)
+      if (!document.getElementById('pwa-manifest')) {
+        const manifestString = JSON.stringify({
+          name: "YDY Not Hesaplama Sistemi",
+          short_name: "YDY Hesapla",
+          start_url: window.location.href,
+          display: "standalone",
+          background_color: "#000000",
+          theme_color: "#a855f7",
+          icons: [{ src: "https://cdn-icons-png.flaticon.com/512/2232/2232688.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }]
+        });
+        const blob = new Blob([manifestString], {type: 'application/json'});
+        const manifestLink = document.createElement('link');
+        manifestLink.id = 'pwa-manifest'; manifestLink.rel = 'manifest'; manifestLink.href = URL.createObjectURL(blob);
+        document.head.appendChild(manifestLink);
+      }
+
+      // 3. Zırhlı Analytics
+      if (!document.getElementById('google-analytics')) {
+        const script1 = document.createElement('script');
+        script1.id = 'google-analytics'; script1.async = true;
+        script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
+        document.head.appendChild(script1);
+        const script2 = document.createElement('script');
+        script2.id = 'google-analytics-config';
+        script2.innerHTML = `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${GA_TRACKING_ID}', { 'send_page_view': true });`;
+        document.head.appendChild(script2);
+      }
     }
   };
 
-  // İŞTE ÇÖZÜM: CERRAHİ TEMİZLEYİCİ (Sadece isim ve sınıfı siler, notları korur)
   const performOneTimeClear = async () => {
     try {
-      const hasCleared = await AsyncStorage.getItem('@cache_cleared_v2'); // Versiyon v2 oldu
+      const hasCleared = await AsyncStorage.getItem('@cache_cleared_v2');
       if (!hasCleared) {
         const savedData = await AsyncStorage.getItem('@ydy_data');
         if (savedData) {
           let parsed = JSON.parse(savedData);
-          // SADECE 1. EKRAN BİLGİLERİNİ SIFIRLIYORUZ
-          parsed.studentName = '';
-          parsed.studentClassNum = '';
-          // Değişikliği kaydediyoruz (Notlar aynen kalıyor)
+          parsed.studentName = ''; parsed.studentClassNum = '';
           await AsyncStorage.setItem('@ydy_data', JSON.stringify(parsed));
         }
         await AsyncStorage.setItem('@cache_cleared_v2', 'true');
@@ -83,16 +120,7 @@ export default function App() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      if (Platform.OS === 'web') {
-        document.title = "YDY Not Hesaplama - Alparslan Soyak";
-        const metaTags = [
-          { property: 'og:title', content: 'YDY Not Hesaplama Sistemi' },
-          { property: 'og:description', content: 'Notlarını hesapla, finalde kaç alman gerektiğini öğren!' },
-          { property: 'og:type', content: 'website' }
-        ];
-        metaTags.forEach(tag => { const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); });
-        setupAnalytics();
-      }
+      setupWebEnvironment();
       await performOneTimeClear();
       await loadSavedData();
     };
@@ -100,6 +128,15 @@ export default function App() {
   }, []);
 
   useEffect(() => { if (isLoaded) { calculateGrade(); saveData(); } }, [grades, selectedCourse, studentName, studentClassNum, activeTheme]);
+
+  const triggerAnimation = () => {
+    fadeAnim.setValue(0);
+    scaleAnim.setValue(0.95);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 6, tension: 40, useNativeDriver: false })
+    ]).start();
+  };
 
   const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
@@ -128,7 +165,12 @@ export default function App() {
         const isP = bS >= 64.5; res.durum = isP ? 'Bütünleme ile Geçtiniz ✓' : 'Kaldınız ✗'; res.renk = isP ? theme.accent : '#ef4444';
       }
     }
-    setResults(res);
+    
+    // Sadece geçerli bir sonuç olduğunda ve değer değiştiğinde animasyonu tetikle
+    setResults(prev => {
+      if (!prev || prev.ortalama !== res.ortalama || prev.durum !== res.durum) { setTimeout(triggerAnimation, 50); }
+      return res;
+    });
   };
 
   const handleLogin = () => {
@@ -233,6 +275,7 @@ export default function App() {
           <View><Text style={[styles.welcomeText, { color: theme.textSecondary }]}>Hoş geldin,</Text><Text style={[styles.welcomeName, { color: theme.text }]}>{studentName} <Text style={{color: theme.accent}}>- {selectedCourse}{studentClassNum}</Text></Text></View>
           <TouchableOpacity onPress={() => setIsEntered(false)} style={[styles.editBtn, {borderColor: theme.border, backgroundColor: theme.bg}]}><Text style={{fontSize: 18}}>⚙️</Text></TouchableOpacity>
         </View>
+        
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
           <View style={styles.simetricRow}><View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 1', 'quiz', 0)}<View style={styles.gap12} />{renderInput('Quiz 2', 'quiz', 1)}</View></View><View style={styles.gap16} /><View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 3', 'quiz', 2)}<View style={styles.gap12} />{renderInput('Quiz 4', 'quiz', 3)}</View></View></View>
@@ -247,16 +290,18 @@ export default function App() {
           <View style={{height: 16}}/><View style={styles.simetricRow}>{renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}</View>
         </View>
         <View style={styles.simetricRow}><View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('FİNAL', 'final')}</View><View style={styles.gap16} /><View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('BÜTÜNLEME', 'butunleme')}</View></View>
+
         {results && (
-          <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
+          <Animated.View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1, opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
             <Text style={[styles.resN, { color: theme.text }]}>Ortalama: {results.ortalama}</Text>
             {results.fH && <Text style={[styles.detailT, {color: theme.textSecondary}]}>Yıl Sonu: {results.fH}</Text>}
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
-            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
             <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
-          </View>
+            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
+          </Animated.View>
         )}
+
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
           <View style={styles.feedbackInputGroup}>
