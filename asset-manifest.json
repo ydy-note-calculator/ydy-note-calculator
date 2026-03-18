@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.js": "/ydy-note-calculator/static/js/main.25c4a69e.js",
-    "static/js/456.b76e266a.js": "/ydy-note-calculator/static/js/456.b76e266a.js",
+    "main.js": "/ydy-note-calculator/static/js/main.e48f7f7c.js",
+    "static/js/113.0ad29fe1.js": "/ydy-note-calculator/static/js/113.0ad29fe1.js",
     "index.html": "/ydy-note-calculator/index.html",
     "manifest.json": "/ydy-note-calculator/manifest.json",
     "serve.json": "/ydy-note-calculator/serve.json",
-    "main.25c4a69e.js.map": "/ydy-note-calculator/static/js/main.25c4a69e.js.map",
-    "456.b76e266a.js.map": "/ydy-note-calculator/static/js/456.b76e266a.js.map"
+    "main.e48f7f7c.js.map": "/ydy-note-calculator/static/js/main.e48f7f7c.js.map",
+    "113.0ad29fe1.js.map": "/ydy-note-calculator/static/js/113.0ad29fe1.js.map"
   },
   "entrypoints": [
-    "static/js/456.b76e266a.js",
-    "static/js/main.25c4a69e.js"
+    "static/js/113.0ad29fe1.js",
+    "static/js/main.e48f7f7c.js"
   ]
 }
