@@ -14,7 +14,7 @@ const THEMES = {
 
 export default function App() {
   const { width } = useWindowDimensions();
-  const isMobile = width < 600; // Ekran radarı: 600px altı mobildir.
+  const isMobile = width < 600; 
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEntered, setIsEntered] = useState(false); 
@@ -147,15 +147,12 @@ export default function App() {
 
   if (!isLoaded) return null;
 
-  // ==========================================
   // 1. KATMAN: GİRİŞ (PORTAL) EKRANI
-  // ==========================================
   if (!isEntered) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
         <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
         
-        {/* Temalar Artık Giriş Kartının Üstünde ve Düzenli */}
         <View style={{flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 20}}>
           {Object.values(THEMES).map(t => (
             <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
@@ -179,32 +176,28 @@ export default function App() {
             <Text style={styles.loginBtnT}>Sisteme Giriş Yap</Text>
           </TouchableOpacity>
         </View>
-        
-        {/* İMZA PORTAL EKRANINDAN SİLİNDİ */}
       </View>
     );
   }
 
-  // ==========================================
   // 2. KATMAN: ANA HESAPLAMA EKRANI
-  // ==========================================
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        {/* MOBİL UYUMLU DİNAMİK BAŞLIK RADARI */}
+        {/* İŞTE ÇÖZÜM: minHeight: 100 eklendi, boşluklar koruma altına alındı */}
         <View style={{
           width: '100%',
           flexDirection: isMobile ? 'column' : 'row',
           justifyContent: isMobile ? 'center' : 'flex-end',
           alignItems: 'center',
           marginTop: 40,
-          marginBottom: 20,
+          marginBottom: 30, // Mesafe artırıldı
+          minHeight: 100, // MUTLAK KALKAN: Alt panelin yukarı kaymasını engeller
           position: 'relative',
-          gap: isMobile ? 15 : 0 // Mobilde aralarını açar
+          gap: isMobile ? 15 : 0 
         }}>
-          {/* Masaüstünde Absolute (Tam Orta), Mobilde Relative (Akışa uygun) */}
           <View style={{
             position: isMobile ? 'relative' : 'absolute',
             left: 0, right: 0,
@@ -304,7 +297,6 @@ export default function App() {
         <View style={{ height: 280 }} /> 
       </ScrollView>
 
-      {/* İMZA SADECE BURADA (ANA EKRAN) VAR */}
       <View style={[styles.footerContainer, { backgroundColor: theme.card, borderTopColor: theme.accent }]}>
         <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
         <View style={styles.feedbackRow}>
@@ -321,7 +313,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16 },
   
-  title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center' },
+  title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
   
   themeSelector: { flexDirection: 'row', gap: 8, zIndex: 10 },
