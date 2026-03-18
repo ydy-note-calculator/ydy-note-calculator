@@ -3,7 +3,6 @@ import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Dimens
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// SENİN ANALYTICS ID'N
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
 const THEMES = {
@@ -36,9 +35,18 @@ export default function App() {
 
   const setupWebEnvironment = () => {
     if (Platform.OS === 'web') {
-      // İŞTE ÇÖZÜM: İsim sekmeden tamamen silindi, sadece sistemin adı kaldı.
       document.title = "YDY Not Hesaplama Sistemi";
       
+      // İŞTE ÇÖZÜM: LOGO (FAVICON) MÜHÜRLENDİ
+      if (!document.querySelector("link[rel*='icon']")) {
+        const favicon = document.createElement('link');
+        favicon.type = 'image/png';
+        favicon.rel = 'shortcut icon';
+        // Genel bir ikon yerine sistemin ruhuna uygun profesyonel bir sembol bağladım
+        favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png'; 
+        document.getElementsByTagName('head')[0].appendChild(favicon);
+      }
+
       const metaTags = [
         { property: 'og:title', content: 'YDY Not Hesaplama Sistemi' },
         { property: 'og:description', content: 'Notlarını hesapla, finalde kaç alman gerektiğini öğren!' },
@@ -142,12 +150,7 @@ export default function App() {
 
   const shareOnWhatsApp = () => {
     if (!results) return;
-    let text = `🚀 ${studentName} - ${selectedCourse}${studentClassNum} YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
-    if (grades.final !== '' && results.fH && grades.butunleme === '') text += `Yıl Sonu Notu: ${results.fH}\n`;
-    if (grades.butunleme !== '' && results.bH) text += `Yıl Sonu Notu: ${results.bH}\n`;
-    text += `Durum: ${results.durum}\n`;
-    if (targetNote) text += `Hedef: ${targetNote.text}\n`;
-    text += `\nUygulama: ${window.location.href}`;
+    let text = `🚀 ${studentName} - ${selectedCourse}${studentClassNum} YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\nDurum: ${results.durum}\n\nUygulama: ${window.location.href}`;
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
