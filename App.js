@@ -5,12 +5,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
-// MULTI-THEME SİSTEMİ (Mor Accent ile Hacker Teması Varsayılan)
 const THEMES = {
   dark: { id: 'dark', icon: '🌙', bg: '#0f172a', card: '#1e293b', text: '#ffffff', textSecondary: '#94a3b8', border: '#334155', accent: '#a855f7' },
   light: { id: 'light', icon: '☀️', bg: '#f8fafc', card: '#ffffff', text: '#1e293b', textSecondary: '#64748b', border: '#e2e8f0', accent: '#a855f7' },
   ocean: { id: 'ocean', icon: '🌊', bg: '#082f49', card: '#0c4a6e', text: '#f0f9ff', textSecondary: '#bae6fd', border: '#0284c7', accent: '#0ea5e9' },
-  hacker: { id: 'hacker', icon: '💻', bg: '#000000', card: '#052e16', text: '#4ade80', textSecondary: '#22c55e', border: '#166534', accent: '#a855f7' } // Hacker'ın accent'i mor yapıldı
+  hacker: { id: 'hacker', icon: '💻', bg: '#000000', card: '#052e16', text: '#4ade80', textSecondary: '#22c55e', border: '#166534', accent: '#a855f7' }
 };
 
 export default function App() {
@@ -20,7 +19,7 @@ export default function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEntered, setIsEntered] = useState(false); 
   
-  const [activeTheme, setActiveTheme] = useState('hacker'); // Hacker teması varsayılan yapıldı
+  const [activeTheme, setActiveTheme] = useState('hacker'); 
   const [studentName, setStudentName] = useState('');
   const [studentClassNum, setStudentClassNum] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('A');
@@ -148,7 +147,9 @@ export default function App() {
 
   if (!isLoaded) return null;
 
+  // ==========================================
   // 1. KATMAN: GİRİŞ (PORTAL) EKRANI
+  // ==========================================
   if (!isEntered) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
@@ -181,10 +182,13 @@ export default function App() {
     );
   }
 
+  // ==========================================
   // 2. KATMAN: ANA HESAPLAMA EKRANI
+  // ==========================================
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
+      
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
         <View style={{ width: '100%', flexDirection: isMobile ? 'column' : 'row', justifyContent: isMobile ? 'center' : 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative', gap: isMobile ? 15 : 0 }}>
@@ -250,7 +254,6 @@ export default function App() {
           </View>
           <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
-            {/* ETİKETLER GÜNCELLENDİ (Kanaat Notu, Online Ödev) */}
             {renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}
           </View>
         </View>
@@ -278,36 +281,35 @@ export default function App() {
           </View>
         )}
 
-        <TouchableOpacity style={styles.reset} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
-        
-        {/* ALT PANEL ARTIK BURADA OLMADIĞI İÇİN BOŞLUK AZALTILDI */}
-        <View style={{ height: 100 }} /> 
-      </ScrollView>
+        <TouchableOpacity style={styles.reset} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
+          <Text style={styles.resetT}>Tüm Notları Sıfırla</Text>
+        </TouchableOpacity>
 
-      {/* YENİ TASARIM: SABİT GERİ BİLDİRİM PANELİ VE İMZA BİRLEŞTİRİLDİ */}
-      <View style={[styles.feedbackPanelFixed, { backgroundColor: theme.card, borderTopColor: theme.accent }]}>
-        <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
-        <View style={styles.feedbackInputRow}>
-          <TextInput 
-            style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-            placeholder="Mesajınız..." 
-            placeholderTextColor={theme.textSecondary}
-            value={feedbackText}
-            onChangeText={setFeedbackText}
-            maxLength={500}
-            multiline={true}
-            numberOfLines={4} // Kutu daha derin (büyük) yapıldı
-          />
-          <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
-            <Text style={styles.fSendBtnT}>Gönder</Text>
-          </TouchableOpacity>
+        {/* --- YENİ MİMARİ: GERİ BİLDİRİM PANELİ ARTIK SCROLLVIEW'UN İÇİNDE --- */}
+        <View style={[styles.feedbackContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
+          <View style={styles.feedbackRow}>
+            <TextInput 
+              style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
+              placeholder="Mesajınız..." 
+              placeholderTextColor={theme.textSecondary}
+              value={feedbackText}
+              onChangeText={setFeedbackText}
+              maxLength={500}
+              multiline={true}
+            />
+            <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
+              <Text style={styles.fSendBtnT}>Gönder</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* TAMAMEN BAĞIMSIZ İMZA */}
+        <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
         
-        {/* İMZA ARTIK MESAJ KUTUSUNUN ALTINDA VE SABİT */}
-        <View style={styles.footerPanel}>
-          <Text style={styles.footerT}>Created by Alparslan Soyak</Text>
-        </View>
-      </View>
+        {/* Rahat kaydırma için küçük bir boşluk */}
+        <View style={{ height: 40 }} /> 
+      </ScrollView>
     </View>
   );
 }
@@ -315,30 +317,39 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16 },
+  
   title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  
   themeSelector: { flexDirection: 'row', gap: 8, zIndex: 10 },
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeIcon: { fontSize: 16 },
+
   loginCard: { width: '100%', maxWidth: 500, alignSelf: 'center', padding: 30, borderRadius: 24, borderWidth: 1, elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 15 },
   loginTitle: { fontSize: 56, fontWeight: '900', textAlign: 'center', letterSpacing: 3 },
   loginSubtitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
   loginBtn: { padding: 18, borderRadius: 12, alignItems: 'center', marginTop: 10 },
   loginBtnT: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
+
   welcomePanel: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 24 },
   welcomeText: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
   welcomeName: { fontSize: 18, fontWeight: 'bold' },
   editBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+
   section: { borderRadius: 16, padding: 18, marginBottom: 16, borderWidth: 1 },
   simetricRow: { flexDirection: 'row', width: '100%' },
   flexItem: { flex: 1 },
   gap16: { width: 16 }, gap12: { width: 12 }, 
+  
   label: { fontSize: 12, fontWeight: '800', marginBottom: 14, letterSpacing: 1 },
   iL: { fontSize: 12, marginBottom: 6, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  
   input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, minHeight: 50 },
   errT: { color: '#ef4444', fontSize: 10, marginTop: 4, fontWeight: 'bold', position: 'absolute', bottom: -16 },
+  
   btn: { flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', borderWidth: 1 },
   btnT: { fontWeight: 'bold', fontSize: 15 },
+  
   res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginTop: 4 },
   resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
   resN: { fontSize: 32, fontWeight: '900' },
@@ -346,49 +357,44 @@ const styles = StyleSheet.create({
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  
   reset: { marginTop: 20, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   
-  // SABİT YAZI KUTUCUĞU TASARIMI (Sticky Bottom)
-  feedbackPanelFixed: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    padding: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    elevation: 20, // Panelin ScrollView üzerinde yüzmesi için
-    borderTopWidth: 2,
+  // --- YENİ YAPI: SAYFA AKIŞINA UYGUN GERİ BİLDİRİM KUTUSU ---
+  feedbackContainer: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 24,
+    marginTop: 10,
+    marginBottom: 20, // İmza ile arasına boşluk bırakır
   },
-  
-  // Mesaj Yazısı (Label) büyütüldü
-  feedbackTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
-  feedbackInputRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  
-  // KUTUCUK (TextInput) büyütüldü
+  feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
+  feedbackRow: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
   fInputMultiline: { 
     flex: 1, 
-    borderRadius: 12, 
-    padding: 16, // padding artırıldı
     borderWidth: 1, 
-    fontSize: 16, // Yazı boyutu büyütüldü
-    height: 120, // Kutu yüksekliği belirgin şekilde artırıldı
-    textAlignVertical: 'top' 
+    borderRadius: 12, 
+    padding: 16, 
+    fontSize: 15,
+    minHeight: 100, // Kutu büyütüldü
+    textAlignVertical: 'top'
   },
-  
-  fSendBtn: { paddingHorizontal: 20, borderRadius: 12, justifyContent: 'center', height: 50, marginTop: 'auto' },
-  fSendBtnT: { color: '#fff', fontWeight: 'bold' },
-  
-  // İMZA ALANI (Panel İçine Alındı)
-  footerPanel: {
-    alignItems: 'center',
-    marginTop: 18, // Mesaj kutusuyla imza arasına nefes payı
-    paddingBottom: 4
+  fSendBtn: { 
+    borderRadius: 12, 
+    paddingHorizontal: 24, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
-  footerT: { 
+  fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  
+  // --- BAĞIMSIZ İMZA ---
+  footerBrand: { 
+    textAlign: 'center', 
     color: '#64748b', 
     fontSize: 16, 
     fontWeight: '800', 
-    letterSpacing: 1.5 
+    letterSpacing: 2,
+    marginTop: 10
   }
 });
