@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
+const GA_TRACKING_ID = 'G-FD2290G3VG';
 
 export default function App() {
   const [selectedCourse, setSelectedCourse] = useState('A');
@@ -15,7 +16,9 @@ export default function App() {
   const [results, setResults] = useState(null);
   const [targetNote, setTargetNote] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
 
+  // Google Analytics Kurulumu
   useEffect(() => {
     if (Platform.OS === 'web') {
       document.documentElement.lang = 'tr';
@@ -23,6 +26,21 @@ export default function App() {
       meta.name = 'google';
       meta.content = 'notranslate';
       document.head.appendChild(meta);
+
+      // G-TAG Enjeksiyonu
+      const script1 = document.createElement('script');
+      script1.async = true;
+      script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
+      document.head.appendChild(script1);
+
+      const script2 = document.createElement('script');
+      script2.innerHTML = `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${GA_TRACKING_ID}');
+      `;
+      document.head.appendChild(script2);
     }
     loadSavedData();
   }, []);
@@ -35,9 +53,7 @@ export default function App() {
   }, [grades, selectedCourse]);
 
   const saveData = async () => {
-    try {
-      await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse }));
-    } catch (e) { console.error(e); }
+    try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse })); } catch (e) { console.error(e); }
   };
 
   const loadSavedData = async () => {
@@ -63,7 +79,7 @@ export default function App() {
 
     const ortalama = quizPoints + vizePoints + writingPoints + sunumPoints + kanaatPoints + odevPoints;
     
-    // Geçme barajları otomasyon yuvarlama mantığına (0.5) göre güncellendi.
+    // Geçme barajları otomasyon yuvarlama mantığına göre
     const minForPass = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
     
     if (grades.final === '') {
@@ -90,7 +106,7 @@ export default function App() {
       const fScore = (parseFloat(grades.final) * 0.6 + ortalama * 0.4).toFixed(2);
       res.finalHesap = fScore; 
       
-      if (fScore >= 64.5) { res.durum = 'Final ile Geçtiniz ✓'; res.renk = '#10b981'; } // Final geçme barajı da 65'ten 64.5'e uyarlanabilir, şu an 64.5 yapıldı
+      if (fScore >= 64.5) { res.durum = 'Final ile Geçtiniz ✓'; res.renk = '#10b981'; }
       else if (grades.butunleme === '') { res.durum = 'Bütünlemeye Kaldınız'; res.renk = '#ef4444'; }
       else {
         const bScore = (parseFloat(grades.butunleme) * 0.6 + ortalama * 0.4).toFixed(2);
@@ -106,14 +122,11 @@ export default function App() {
   const shareOnWhatsApp = () => {
     if (!results) return;
     let text = `🚀 YDY Sonucum:\n\nKur: ${selectedCourse}\nOrtalama: ${results.ortalama}\n`;
-    
     if (grades.final !== '' && results.finalHesap && grades.butunleme === '') text += `Yıl Sonu Notu: ${results.finalHesap}\n`;
     if (grades.butunleme !== '' && results.butunlemeHesap) text += `Yıl Sonu Notu: ${results.butunlemeHesap}\n`;
-    
     text += `Durum: ${results.durum}\n`;
     if (targetNote) text += `Hedef: ${targetNote.text}\n`;
     text += `\nUygulama: ${window.location.href}`;
-    
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
@@ -122,6 +135,19 @@ export default function App() {
     if (Array.isArray(grades[f])) {
       const n = [...grades[f]]; n[i] = val; setGrades({ ...grades, [f]: n });
     } else { setGrades({ ...grades, [f]: val }); }
+  };
+
+  // Kullanıcı mesajını Google Analytics'e gönderir
+  const handleSendFeedback = () => {
+    if (!feedbackText.trim()) return;
+    if (Platform.OS === 'web' && window.gtag) {
+      window.gtag('event', 'user_feedback_text', {
+        'event_category': 'Feedback',
+        'event_label': feedbackText.trim(),
+      });
+      alert('Mesajınız başarıyla iletildi. Teşekkür ederiz!');
+      setFeedbackText(''); // Kutuyu temizle
+    }
   };
 
   return (
@@ -190,7 +216,28 @@ export default function App() {
         <TouchableOpacity style={styles.reset} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
 
         <View style={styles.footer}><Text style={styles.footerT}>Created by Alparslan Soyak</Text></View>
+        
+        {/* Alt panelin ekranı kapatmaması için boşluk */}
+        <View style={{ height: 110 }} /> 
       </ScrollView>
+
+      {/* SABİT GERİ BİLDİRİM PANELİ - YAZI YAZILABİLİR KUTUCUK */}
+      <View style={styles.feedbackPanel}>
+        <Text style={styles.feedbackTitle}>Fikir, öneri veya sorunlarınızı bizimle paylaşın:</Text>
+        <View style={styles.feedbackInputRow}>
+          <TextInput 
+            style={styles.fInput} 
+            placeholder="Mesajınızı buraya yazın..." 
+            placeholderTextColor="#64748b"
+            value={feedbackText}
+            onChangeText={setFeedbackText}
+            maxLength={150}
+          />
+          <TouchableOpacity style={styles.fSendBtn} onPress={handleSendFeedback}>
+            <Text style={styles.fSendBtnT}>Gönder</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -221,8 +268,29 @@ const styles = StyleSheet.create({
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   reset: { marginTop: 20, padding: 10, alignItems: 'center' },
   resetT: { color: '#ef4444', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
-  footer: { alignItems: 'center', marginTop: 40, paddingBottom: 40 },
+  footer: { alignItems: 'center', marginTop: 40, paddingBottom: 20 },
   footerT: { color: '#64748b', fontSize: 16, fontWeight: '700', letterSpacing: 1.5 },
-  flex: { flex: 1 }
+  flex: { flex: 1 },
+
+  /* SABİT YAZI KUTUCUĞU TASARIMI */
+  feedbackPanel: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#1e293b',
+    borderTopWidth: 2,
+    borderTopColor: '#a855f7',
+    padding: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  feedbackTitle: { color: '#e2e8f0', fontSize: 12, fontWeight: '600', marginBottom: 10 },
+  feedbackInputRow: { flexDirection: 'row', gap: 10 },
+  fInput: { flex: 1, backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#475569', borderRadius: 8, padding: 10, color: '#fff', fontSize: 13 },
+  fSendBtn: { backgroundColor: '#a855f7', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 8 },
+  fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 13 }
 });
-                     
