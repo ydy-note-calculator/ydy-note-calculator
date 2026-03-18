@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Platform, Linking, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,6 +29,8 @@ export default function App() {
   const [targetNote, setTargetNote] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
 
+  // Debounce için zamanlayıcı referansı
+  const debounceTimer = useRef(null);
   const theme = THEMES[activeTheme] || THEMES.hacker;
 
   useEffect(() => {
@@ -62,7 +64,8 @@ export default function App() {
       const savedData = await AsyncStorage.getItem('@ydy_data');
       if (savedData) {
         const parsed = JSON.parse(savedData);
-        setGrades(parsed.grades || grades); setSelectedCourse(parsed.selectedCourse || 'A');
+        setGrades(parsed.grades || grades); 
+        setSelectedCourse(parsed.selectedCourse || 'A');
         setStudentName(parsed.studentName || '');
         if (parsed.activeTheme && THEMES[parsed.activeTheme]) setActiveTheme(parsed.activeTheme);
       }
@@ -71,16 +74,36 @@ export default function App() {
 
   const saveData = async () => {
     if (!isLoaded) return;
-    try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, activeTheme })); } catch (e) { console.error(e); }
+    try { 
+      await AsyncStorage.setItem('@ydy_data', JSON.stringify({ 
+        grades, selectedCourse, studentName, activeTheme 
+      })); 
+    } catch (e) { console.error(e); }
   };
 
-  useEffect(() => { if (isLoaded) { calculateGrade(); saveData(); } }, [grades, selectedCourse, studentName, activeTheme]);
+  // HIZLI TIKLAMA KORUMASI (DEBOUNCE STRATEJİSİ)
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    // Önceki bekleyen işlemi iptal et
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    // 150ms bekle, eğer yeni tıklama gelmezse hesapla ve kaydet
+    debounceTimer.current = setTimeout(() => {
+      calculateGrade();
+      saveData();
+    }, 150);
+
+    return () => clearTimeout(debounceTimer.current);
+  }, [grades, selectedCourse, studentName, activeTheme]);
 
   const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
     const vP = (grades.vize.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 60;
-    const wP = (parseFloat(grades.writing) || 0) / 100 * 5; const sP = (parseFloat(grades.sunum) || 0) / 100 * 5;
-    const kP = (parseFloat(grades.kanaat) || 0) / 100 * 5; const oP = (parseFloat(grades.odev) || 0) / 100 * 5;
+    const wP = (parseFloat(grades.writing) || 0) / 100 * 5; 
+    const sP = (parseFloat(grades.sunum) || 0) / 100 * 5;
+    const kP = (parseFloat(grades.kanaat) || 0) / 100 * 5; 
+    const oP = (parseFloat(grades.odev) || 0) / 100 * 5;
     const ort = qP + vP + wP + sP + kP + oP;
     const limit = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
     
@@ -119,11 +142,22 @@ export default function App() {
     return (
       <View style={styles.flexItem}>
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
-        <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: val !== '' && parseInt(val) > 100 ? '#ef4444' : theme.border }]} keyboardType="numeric" value={val} onChangeText={t => {
-          const v = t === '' ? '' : t.replace(/[^0-9]/g, '');
-          if (Array.isArray(grades[field])) { const n = [...grades[field]]; n[index] = v; setGrades({ ...grades, [field]: n }); } 
-          else { setGrades({ ...grades, [field]: v }); }
-        }} maxLength={3} />
+        <TextInput 
+          style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: val !== '' && parseInt(val) > 100 ? '#ef4444' : theme.border }]} 
+          keyboardType="numeric" 
+          value={val} 
+          onChangeText={t => {
+            const v = t === '' ? '' : t.replace(/[^0-9]/g, '');
+            if (Array.isArray(grades[field])) {
+              const n = [...grades[field]];
+              n[index] = v;
+              setGrades({ ...grades, [field]: n });
+            } else {
+              setGrades({ ...grades, [field]: v });
+            }
+          }} 
+          maxLength={3} 
+        />
       </View>
     );
   };
@@ -242,7 +276,7 @@ const styles = StyleSheet.create({
   kurBtnT: { fontWeight: 'bold', fontSize: 15 },
   iL: { fontSize: 12, marginBottom: 8, fontWeight: '800' },
   input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, textAlign: 'center', minHeight: 50 },
-  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginBottom: 80 }, // BOŞLUK ARTIRILDI (40 -> 80)
+  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginBottom: 80 },
   resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
   resN: { fontSize: 32, fontWeight: '900' },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
