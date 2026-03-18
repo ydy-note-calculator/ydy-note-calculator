@@ -3,7 +3,6 @@ import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Dimens
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// SENİN ANALYTICS ID'N (BU NUMARA DOĞRU OLMALI)
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
 const THEMES = {
@@ -19,7 +18,6 @@ export default function App() {
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEntered, setIsEntered] = useState(false); 
-  
   const [activeTheme, setActiveTheme] = useState('hacker'); 
   const [studentName, setStudentName] = useState('');
   const [studentClassNum, setStudentClassNum] = useState('');
@@ -35,42 +33,28 @@ export default function App() {
 
   const theme = THEMES[activeTheme] || THEMES.hacker;
 
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      document.title = "YDY Not Hesaplama - Alparslan Soyak";
-      const metaTags = [
-        { property: 'og:title', content: 'YDY Not Hesaplama Sistemi' },
-        { property: 'og:description', content: 'Notlarını hesapla, finalde kaç alman gerektiğini öğren!' },
-        { property: 'og:type', content: 'website' }
-      ];
-      metaTags.forEach(tag => { const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); });
-
-      // --- MUTLAK ÇÖZÜM: ZIRHLI ANALYTICS ENTEGRASYONU ---
-      if (!document.getElementById('google-analytics')) {
-        const script1 = document.createElement('script');
-        script1.id = 'google-analytics';
-        script1.async = true;
-        script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
-        document.head.appendChild(script1);
-
-        const script2 = document.createElement('script');
-        script2.id = 'google-analytics-config';
-        script2.innerHTML = `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_TRACKING_ID}', { 'send_page_view': true });
-        `;
-        document.head.appendChild(script2);
-      }
+  // 1. ÖNCE SİLAHLAR TANIMLANIR (HOISTING GÜVENLİĞİ)
+  const setupAnalytics = () => {
+    if (Platform.OS === 'web' && !document.getElementById('google-analytics')) {
+      const script1 = document.createElement('script');
+      script1.id = 'google-analytics'; script1.async = true;
+      script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
+      document.head.appendChild(script1);
+      const script2 = document.createElement('script');
+      script2.id = 'google-analytics-config';
+      script2.innerHTML = `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${GA_TRACKING_ID}', { 'send_page_view': true });`;
+      document.head.appendChild(script2);
     }
-    loadSavedData();
-  }, []);
+  };
 
-  useEffect(() => { if (isLoaded) { calculateGrade(); saveData(); } }, [grades, selectedCourse, studentName, studentClassNum, activeTheme]);
-
-  const saveData = async () => {
-    try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, studentClassNum, activeTheme })); } catch (e) { console.error(e); }
+  const performOneTimeClear = async () => {
+    try {
+      const hasCleared = await AsyncStorage.getItem('@cache_cleared_v1');
+      if (!hasCleared) {
+        await AsyncStorage.removeItem('@ydy_data');
+        await AsyncStorage.setItem('@cache_cleared_v1', 'true');
+      }
+    } catch (e) { console.error(e); }
   };
 
   const loadSavedData = async () => {
@@ -85,12 +69,36 @@ export default function App() {
     } catch (e) { console.error(e); } finally { setIsLoaded(true); }
   };
 
+  const saveData = async () => {
+    try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, studentClassNum, activeTheme })); } catch (e) { console.error(e); }
+  };
+
+  // 2. SONRA MOTOR ÇALIŞTIRILIR (HATA RİSKİ SIFIR)
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (Platform.OS === 'web') {
+        document.title = "YDY Not Hesaplama - Alparslan Soyak";
+        const metaTags = [
+          { property: 'og:title', content: 'YDY Not Hesaplama Sistemi' },
+          { property: 'og:description', content: 'Notlarını hesapla, finalde kaç alman gerektiğini öğren!' },
+          { property: 'og:type', content: 'website' }
+        ];
+        metaTags.forEach(tag => { const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); });
+        setupAnalytics();
+      }
+      await performOneTimeClear();
+      await loadSavedData();
+    };
+    initializeApp();
+  }, []);
+
+  useEffect(() => { if (isLoaded) { calculateGrade(); saveData(); } }, [grades, selectedCourse, studentName, studentClassNum, activeTheme]);
+
   const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
     const vP = (grades.vize.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 60;
     const wP = (parseFloat(grades.writing) || 0) / 100 * 5; const sP = (parseFloat(grades.sunum) || 0) / 100 * 5;
     const kP = (parseFloat(grades.kanaat) || 0) / 100 * 5; const oP = (parseFloat(grades.odev) || 0) / 100 * 5;
-
     const ort = qP + vP + wP + sP + kP + oP;
     const limit = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
     
@@ -117,14 +125,9 @@ export default function App() {
   };
 
   const handleLogin = () => {
-    if(!studentName.trim() || !studentClassNum.trim()) {
-      alert("Lütfen adınızı ve sınıf numaranızı giriniz.");
-      return;
-    }
+    if(!studentName.trim() || !studentClassNum.trim()) { alert("Lütfen adınızı ve sınıf numaranızı giriniz."); return; }
     setIsEntered(true);
   };
-
-  const handleLogout = () => { setIsEntered(false); };
 
   const shareOnWhatsApp = () => {
     if (!results) return;
@@ -136,14 +139,6 @@ export default function App() {
     text += `\nUygulama: ${window.location.href}`;
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
-
-  const handleInputChange = (f, i, v) => {
-    const val = v === '' ? '' : v.replace(/[^0-9]/g, '');
-    if (Array.isArray(grades[f])) { const n = [...grades[f]]; n[i] = val; setGrades({ ...grades, [f]: n }); } 
-    else { setGrades({ ...grades, [f]: val }); }
-  };
-
-  const isInvalid = (val) => val !== '' && (parseInt(val) > 100 || parseInt(val) < 0);
 
   const handleSendFeedback = () => {
     if (!feedbackText.trim() || !window.gtag) return;
@@ -157,22 +152,22 @@ export default function App() {
     return (
       <View style={styles.flexItem}>
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
-        <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: isInvalid(val) ? '#ef4444' : theme.border }]} keyboardType="numeric" value={val} onChangeText={t => handleInputChange(field, index, t)} maxLength={3} placeholder="" />
-        {isInvalid(val) && <Text style={styles.errT}>!</Text>}
+        <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: val !== '' && (parseInt(val) > 100) ? '#ef4444' : theme.border }]} keyboardType="numeric" value={val} onChangeText={t => {
+          const v = t === '' ? '' : t.replace(/[^0-9]/g, '');
+          if (Array.isArray(grades[field])) { const n = [...grades[field]]; n[index] = v; setGrades({ ...grades, [field]: n }); } 
+          else { setGrades({ ...grades, [field]: v }); }
+        }} maxLength={3} placeholder="" />
+        {val !== '' && parseInt(val) > 100 && <Text style={styles.errT}>!</Text>}
       </View>
     );
   };
 
   if (!isLoaded) return null;
 
-  // ==========================================
-  // 1. KATMAN: GİRİŞ EKRANI
-  // ==========================================
   if (!isEntered) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', padding: 20 }]}>
         <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
-        
         <View style={{flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 20}}>
           {Object.values(THEMES).map(t => (
             <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
@@ -180,11 +175,9 @@ export default function App() {
             </TouchableOpacity>
           ))}
         </View>
-
         <View style={[styles.loginCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.loginTitle, { color: theme.text }]}>YDY</Text>
           <Text style={[styles.loginSubtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
-
           <Text style={[styles.label, { color: theme.accent, marginTop: 30 }]}>KUR SEÇİMİ</Text>
           <View style={styles.simetricRow}>
             {['A', 'B', 'C'].map((k, i) => (
@@ -196,17 +189,14 @@ export default function App() {
               </React.Fragment>
             ))}
           </View>
-
           <Text style={[styles.label, { color: theme.accent, marginTop: 30 }]}>KİMLİK BİLGİLERİ</Text>
           <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
           <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]} value={studentName} onChangeText={setStudentName} />
-          
           <Text style={[styles.iL, { color: theme.text }]}>SINIF</Text>
           <View style={[styles.classBox, { backgroundColor: theme.bg, borderColor: theme.border, marginBottom: 30 }]}>
             <Text style={[styles.prefix, { color: theme.text, borderRightColor: theme.border }]}>{selectedCourse}</Text>
             <TextInput style={[styles.inputNoBorder, { color: theme.text }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} keyboardType="numeric" maxLength={2} />
           </View>
-
           <TouchableOpacity style={[styles.loginBtn, {backgroundColor: theme.accent}]} onPress={handleLogin}>
             <Text style={styles.loginBtnT}>Sisteme Giriş Yap</Text>
           </TouchableOpacity>
@@ -215,15 +205,10 @@ export default function App() {
     );
   }
 
-  // ==========================================
-  // 2. KATMAN: ANA HESAPLAMA EKRANI
-  // ==========================================
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
-      
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
           <View style={[styles.titleCenter, isMobile ? { position: 'relative' } : {}]}>
             <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>YDY</Text>
@@ -237,208 +222,84 @@ export default function App() {
             ))}
           </View>
         </View>
-
         <View style={[styles.welcomePanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <View>
-            <Text style={[styles.welcomeText, { color: theme.textSecondary }]}>Hoş geldin,</Text>
-            <Text style={[styles.welcomeName, { color: theme.text }]}>{studentName} <Text style={{color: theme.accent}}>- {selectedCourse}{studentClassNum}</Text></Text>
-          </View>
-          <TouchableOpacity onPress={handleLogout} style={[styles.editBtn, {borderColor: theme.border, backgroundColor: theme.bg}]}>
-            <Text style={{fontSize: 18}}>⚙️</Text>
-          </TouchableOpacity>
+          <View><Text style={[styles.welcomeText, { color: theme.textSecondary }]}>Hoş geldin,</Text><Text style={[styles.welcomeName, { color: theme.text }]}>{studentName} <Text style={{color: theme.accent}}>- {selectedCourse}{studentClassNum}</Text></Text></View>
+          <TouchableOpacity onPress={() => setIsEntered(false)} style={[styles.editBtn, {borderColor: theme.border, backgroundColor: theme.bg}]}><Text style={{fontSize: 18}}>⚙️</Text></TouchableOpacity>
         </View>
-
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
-          <View style={styles.simetricRow}>
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 1', 'quiz', 0)}<View style={styles.gap12} />{renderInput('Quiz 2', 'quiz', 1)}</View></View>
-            <View style={styles.gap16} /> 
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 3', 'quiz', 2)}<View style={styles.gap12} />{renderInput('Quiz 4', 'quiz', 3)}</View></View>
-          </View>
+          <View style={styles.simetricRow}><View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 1', 'quiz', 0)}<View style={styles.gap12} />{renderInput('Quiz 2', 'quiz', 1)}</View></View><View style={styles.gap16} /><View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Quiz 3', 'quiz', 2)}<View style={styles.gap12} />{renderInput('Quiz 4', 'quiz', 3)}</View></View></View>
         </View>
-
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>VİZE NOTLARI</Text>
-          <View style={styles.simetricRow}>
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Vize 1', 'vize', 0)}<View style={styles.gap12} />{renderInput('Vize 2', 'vize', 1)}</View></View>
-            <View style={styles.gap16} /> 
-            <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Vize 3', 'vize', 2)}<View style={styles.gap12} />{renderInput('Vize 4', 'vize', 3)}</View></View>
-          </View>
+          <View style={styles.simetricRow}><View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Vize 1', 'vize', 0)}<View style={styles.gap12} />{renderInput('Vize 2', 'vize', 1)}</View></View><View style={styles.gap16} /><View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Vize 3', 'vize', 2)}<View style={styles.gap12} />{renderInput('Vize 4', 'vize', 3)}</View></View></View>
         </View>
-
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
-          <View style={styles.simetricRow}>
-            {renderInput('Writing', 'writing')} <View style={styles.gap16} /> {renderInput('Sunum', 'sunum')}
-          </View>
-          <View style={{height: 16}}/> 
-          <View style={styles.simetricRow}>
-            {renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('Writing', 'writing')} <View style={styles.gap16} /> {renderInput('Sunum', 'sunum')}</View>
+          <View style={{height: 16}}/><View style={styles.simetricRow}>{renderInput('Kanaat Notu', 'kanaat')} <View style={styles.gap16} /> {renderInput('Online Ödev', 'odev')}</View>
         </View>
-
-        <View style={styles.simetricRow}>
-          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-             {renderInput('FİNAL', 'final')}
-          </View>
-          <View style={styles.gap16} /> 
-          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-             {renderInput('BÜTÜNLEME', 'butunleme')}
-          </View>
-        </View>
-
+        <View style={styles.simetricRow}><View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('FİNAL', 'final')}</View><View style={styles.gap16} /><View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('BÜTÜNLEME', 'butunleme')}</View></View>
         {results && (
           <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
             <Text style={[styles.resN, { color: theme.text }]}>Ortalama: {results.ortalama}</Text>
             {results.fH && <Text style={[styles.detailT, {color: theme.textSecondary}]}>Yıl Sonu: {results.fH}</Text>}
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
-            
-            {/* İŞTE ÇÖZÜM: BUTONLAR YER DEĞİŞTİRDİ */}
-            <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
-              <Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}>
-              <Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text>
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
           </View>
         )}
-
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
           <View style={styles.feedbackInputGroup}>
-            {/* İŞTE ÇÖZÜM: Yönlendirici Placeholder Metni Eklendi */}
-            <TextInput 
-              style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-              placeholder="Uygulama ile ilgili soru, öneri ve şikayetlerinizi buraya yazabilirsiniz..." 
-              placeholderTextColor={theme.textSecondary}
-              value={feedbackText}
-              onChangeText={setFeedbackText}
-              maxLength={500}
-              multiline={true}
-            />
-            <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
-              <Text style={styles.fSendBtnT}>Gönder</Text>
-            </TouchableOpacity>
+            <TextInput style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} placeholder="Uygulama ile ilgili soru, öneri ve şikayetlerinizi buraya yazabilirsiniz..." placeholderTextColor={theme.textSecondary} value={feedbackText} onChangeText={setFeedbackText} maxLength={500} multiline={true}/>
+            <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}><Text style={styles.fSendBtnT}>Gönder</Text></TouchableOpacity>
           </View>
         </View>
-        
         <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
-
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { padding: 16 }, 
-  
+  container: { flex: 1 }, scroll: { padding: 16 }, 
   headerRowMobile: { width: '100%', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, gap: 15 },
   headerRowDesktop: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, minHeight: 100, position: 'relative' },
-  
   titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontWeight: 'bold', letterSpacing: 2, textAlign: 'center', lineHeight: 50 },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
-  
   themeSelector: { flexDirection: 'row', gap: 8, zIndex: 10 },
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeIcon: { fontSize: 16 },
-
-  loginCard: { width: '100%', maxWidth: 500, alignSelf: 'center', padding: 30, borderRadius: 24, borderWidth: 1, elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 15 },
+  loginCard: { width: '100%', maxWidth: 500, alignSelf: 'center', padding: 30, borderRadius: 24, borderWidth: 1, elevation: 10 },
   loginTitle: { fontSize: 56, fontWeight: '900', textAlign: 'center', letterSpacing: 3 },
   loginSubtitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
   loginBtn: { padding: 18, borderRadius: 12, alignItems: 'center', marginTop: 10 },
   loginBtnT: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
-
   welcomePanel: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 24 },
   welcomeText: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
   welcomeName: { fontSize: 18, fontWeight: 'bold' },
   editBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-
   section: { borderRadius: 16, padding: 18, marginBottom: 24, borderWidth: 1 },
-  simetricRow: { flexDirection: 'row', width: '100%' },
-  flexItem: { flex: 1 },
-  gap16: { width: 16, height: 16 }, 
-  gap12: { width: 12 }, 
-  
+  simetricRow: { flexDirection: 'row', width: '100%' }, flexItem: { flex: 1 }, gap16: { width: 16 }, gap12: { width: 12 }, 
   label: { fontSize: 12, fontWeight: '800', marginBottom: 14, letterSpacing: 1 },
   iL: { fontSize: 12, marginBottom: 6, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-  
   input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, minHeight: 50 },
   errT: { color: '#ef4444', fontSize: 10, marginTop: 4, fontWeight: 'bold', position: 'absolute', bottom: -16 },
-  
-  btn: { flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', borderWidth: 1 },
-  btnT: { fontWeight: 'bold', fontSize: 15 },
-  
+  btn: { flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', borderWidth: 1 }, btnT: { fontWeight: 'bold', fontSize: 15 },
   classBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, height: 50 },
-  prefix: { paddingHorizontal: 12, fontWeight: 'bold', borderRightWidth: 1 },
-  inputNoBorder: { flex: 1, paddingHorizontal: 10, fontSize: 15 },
-  
-  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginTop: 4 },
-  resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
-  resN: { fontSize: 32, fontWeight: '900' },
-  detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 },
-  targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
-  
-  // İŞTE ÇÖZÜM: Butonların yerleri ve marjları kusursuz şekilde değiştirildi
-  resetBtn: { 
-    width: '100%',
-    padding: 16, 
-    borderRadius: 10, 
-    alignItems: 'center', 
-    backgroundColor: '#ef4444', 
-    marginTop: 24, // İlk buton olduğu için üstteki yazılara uzaklığı 24 oldu
-    marginBottom: 0, 
-  },
+  prefix: { paddingHorizontal: 12, fontWeight: 'bold', borderRightWidth: 1 }, inputNoBorder: { flex: 1, paddingHorizontal: 10, fontSize: 15 },
+  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginTop: 4 }, resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 }, resN: { fontSize: 32, fontWeight: '900' },
+  detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 }, targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
+  resetBtn: { width: '100%', padding: 16, borderRadius: 10, alignItems: 'center', backgroundColor: '#ef4444', marginTop: 24, marginBottom: 0 },
   resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-
-  waBtn: { 
-    backgroundColor: '#25D366', 
-    marginTop: 12, // İkinci buton olduğu için aradaki mesafe 12 oldu
-    padding: 16, 
-    borderRadius: 10, 
-    alignItems: 'center' 
-  },
-  waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  
-  // İŞTE ÇÖZÜM: Mesafe devasa hale getirildi (marginTop: 60)
-  feedbackCard: {
-    borderRadius: 16, 
-    borderWidth: 1,
-    padding: 20, 
-    marginTop: 60, // İKİ KUTU ARASINDAKİ BOŞLUK ÇOK DAHA FAZLA OLDU
-    marginBottom: 30, 
-  },
-  
+  waBtn: { backgroundColor: '#25D366', marginTop: 12, padding: 16, borderRadius: 10, alignItems: 'center' }, waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  feedbackCard: { borderRadius: 16, borderWidth: 1, padding: 20, marginTop: 60, marginBottom: 30 },
   feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
   feedbackInputGroup: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
-  
-  fInputMultiline: { 
-    flex: 1, 
-    borderWidth: 1, 
-    borderRadius: 12, 
-    padding: 16, 
-    fontSize: 15,
-    minHeight: 130, 
-    textAlignVertical: 'top'
-  },
-  fSendBtn: { 
-    borderRadius: 12, 
-    paddingHorizontal: 24, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  
-  footerBrand: { 
-    textAlign: 'center', 
-    color: '#64748b', 
-    fontSize: 16, 
-    fontWeight: '800', 
-    letterSpacing: 0.5, 
-    marginTop: 15, 
-    marginBottom: 20 
-  }
+  fInputMultiline: { flex: 1, borderWidth: 1, borderRadius: 12, padding: 16, fontSize: 15, minHeight: 130, textAlignVertical: 'top' },
+  fSendBtn: { borderRadius: 12, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' }, fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  footerBrand: { textAlign: 'center', color: '#64748b', fontSize: 16, fontWeight: '800', letterSpacing: 0.5, marginTop: 15, marginBottom: 20 }
 });
