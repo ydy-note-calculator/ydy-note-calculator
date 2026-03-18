@@ -33,7 +33,6 @@ export default function App() {
 
   const theme = THEMES[activeTheme] || THEMES.hacker;
 
-  // 1. ÖNCE SİLAHLAR TANIMLANIR (HOISTING GÜVENLİĞİ)
   const setupAnalytics = () => {
     if (Platform.OS === 'web' && !document.getElementById('google-analytics')) {
       const script1 = document.createElement('script');
@@ -47,12 +46,21 @@ export default function App() {
     }
   };
 
+  // İŞTE ÇÖZÜM: CERRAHİ TEMİZLEYİCİ (Sadece isim ve sınıfı siler, notları korur)
   const performOneTimeClear = async () => {
     try {
-      const hasCleared = await AsyncStorage.getItem('@cache_cleared_v1');
+      const hasCleared = await AsyncStorage.getItem('@cache_cleared_v2'); // Versiyon v2 oldu
       if (!hasCleared) {
-        await AsyncStorage.removeItem('@ydy_data');
-        await AsyncStorage.setItem('@cache_cleared_v1', 'true');
+        const savedData = await AsyncStorage.getItem('@ydy_data');
+        if (savedData) {
+          let parsed = JSON.parse(savedData);
+          // SADECE 1. EKRAN BİLGİLERİNİ SIFIRLIYORUZ
+          parsed.studentName = '';
+          parsed.studentClassNum = '';
+          // Değişikliği kaydediyoruz (Notlar aynen kalıyor)
+          await AsyncStorage.setItem('@ydy_data', JSON.stringify(parsed));
+        }
+        await AsyncStorage.setItem('@cache_cleared_v2', 'true');
       }
     } catch (e) { console.error(e); }
   };
@@ -73,7 +81,6 @@ export default function App() {
     try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, studentClassNum, activeTheme })); } catch (e) { console.error(e); }
   };
 
-  // 2. SONRA MOTOR ÇALIŞTIRILIR (HATA RİSKİ SIFIR)
   useEffect(() => {
     const initializeApp = async () => {
       if (Platform.OS === 'web') {
@@ -246,8 +253,8 @@ export default function App() {
             <Text style={[styles.resN, { color: theme.text }]}>Ortalama: {results.ortalama}</Text>
             {results.fH && <Text style={[styles.detailT, {color: theme.textSecondary}]}>Yıl Sonu: {results.fH}</Text>}
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
-            <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
             <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
           </View>
         )}
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -293,9 +300,9 @@ const styles = StyleSheet.create({
   prefix: { paddingHorizontal: 12, fontWeight: 'bold', borderRightWidth: 1 }, inputNoBorder: { flex: 1, paddingHorizontal: 10, fontSize: 15 },
   res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginTop: 4 }, resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 }, resN: { fontSize: 32, fontWeight: '900' },
   detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 }, targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
+  waBtn: { backgroundColor: '#25D366', marginTop: 12, padding: 16, borderRadius: 10, alignItems: 'center' }, waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   resetBtn: { width: '100%', padding: 16, borderRadius: 10, alignItems: 'center', backgroundColor: '#ef4444', marginTop: 24, marginBottom: 0 },
   resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-  waBtn: { backgroundColor: '#25D366', marginTop: 12, padding: 16, borderRadius: 10, alignItems: 'center' }, waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   feedbackCard: { borderRadius: 16, borderWidth: 1, padding: 20, marginTop: 60, marginBottom: 30 },
   feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
   feedbackInputGroup: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
