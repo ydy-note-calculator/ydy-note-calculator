@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GA_TRACKING_ID = 'G-FD2290G3VG';
 
-// MULTI-THEME SİSTEMİ
 const THEMES = {
   dark: { id: 'dark', icon: '🌙', bg: '#0f172a', card: '#1e293b', text: '#ffffff', textSecondary: '#94a3b8', border: '#334155', accent: '#a855f7' },
   light: { id: 'light', icon: '☀️', bg: '#f8fafc', card: '#ffffff', text: '#1e293b', textSecondary: '#64748b', border: '#e2e8f0', accent: '#a855f7' },
@@ -146,7 +145,6 @@ export default function App() {
       <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        {/* KUSURSUZ MERKEZLENMİŞ BAŞLIK VE SAĞA YASLI TEMA BUTONLARI */}
         <View style={styles.headerContainer}>
           <View style={styles.titleCenter}>
             <Text style={[styles.title, { color: theme.text }]}>YDY</Text>
@@ -178,15 +176,15 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>ÖĞRENCİ BİLGİLERİ</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>KİMLİK</Text>
           <View style={styles.simetricRow}>
             <View style={styles.flexItem}>
-              <Text style={[styles.iL, { color: theme.text }]}>Ad Soyad</Text>
+              <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
               <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} value={studentName} onChangeText={setStudentName} placeholder="Ali Yılmaz" placeholderTextColor={theme.textSecondary}/>
             </View>
             <View style={styles.gap16} /> 
             <View style={styles.flexItem}>
-              <Text style={[styles.iL, { color: theme.text }]}>Sınıf (Örn: {selectedCourse}12)</Text>
+              <Text style={[styles.iL, { color: theme.text }]}>SINIF ({selectedCourse})</Text>
               <View style={[styles.classBox, { backgroundColor: theme.bg, borderColor: theme.border }]}>
                 <Text style={[styles.prefix, { color: theme.text, borderRightColor: theme.border }]}>{selectedCourse}</Text>
                 <TextInput style={[styles.inputNoBorder, { color: theme.text }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} placeholder="12" placeholderTextColor={theme.textSecondary} keyboardType="numeric"/>
@@ -196,7 +194,7 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>QUIZ (Q)</Text>
           <View style={styles.simetricRow}>
             <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('Q1', 'quiz', 0)}<View style={styles.gap12} />{renderInput('Q2', 'quiz', 1)}</View></View>
             <View style={styles.gap16} /> 
@@ -205,7 +203,7 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>VİZE NOTLARI</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>VİZE (V)</Text>
           <View style={styles.simetricRow}>
             <View style={styles.flexItem}><View style={styles.simetricRow}>{renderInput('V1', 'vize', 0)}<View style={styles.gap12} />{renderInput('V2', 'vize', 1)}</View></View>
             <View style={styles.gap16} /> 
@@ -214,23 +212,23 @@ export default function App() {
         </View>
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text>
+          <Text style={[styles.label, { color: theme.accent }]}>EKSTRA</Text>
           <View style={styles.simetricRow}>
-            {renderInput('Writing', 'writing')} <View style={styles.gap16} /> {renderInput('Sunum', 'sunum')}
+            {renderInput('WRT', 'writing')} <View style={styles.gap16} /> {renderInput('SNM', 'sunum')}
           </View>
           <View style={{height: 16}}/> 
           <View style={styles.simetricRow}>
-            {renderInput('Kanaat', 'kanaat')} <View style={styles.gap16} /> {renderInput('Ödev', 'odev')}
+            {renderInput('KNT', 'kanaat')} <View style={styles.gap16} /> {renderInput('ÖDV', 'odev')}
           </View>
         </View>
 
         <View style={styles.simetricRow}>
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-             {renderInput('FİNAL', 'final')}
+             {renderInput('FİN', 'final')}
           </View>
           <View style={styles.gap16} /> 
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-             {renderInput('BÜTÜNLEME', 'butunleme')}
+             {renderInput('BÜT', 'butunleme')}
           </View>
         </View>
 
@@ -267,24 +265,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16 },
   
-  /* BAŞLIK MERKEZLEME VE İKONLAR İÇİN YENİ MİMARİ */
-  headerContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-end', // İkonları en sağa yaslar
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 30,
-    height: 80, // Absolute elemanlar için yükseklik referansı
-    position: 'relative',
-  },
-  titleCenter: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center', // Başlığı tam ekran ortasına çiviler
-    zIndex: -1, // İkonların tıklanabilirliğini engellememesi için
-  },
+  headerContainer: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 40, marginBottom: 30, height: 80, position: 'relative' },
+  titleCenter: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   title: { fontSize: 48, fontWeight: 'bold', letterSpacing: 2, textAlign: 'center' },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
   
@@ -299,7 +281,7 @@ const styles = StyleSheet.create({
   gap12: { width: 12 }, 
   
   label: { fontSize: 12, fontWeight: '800', marginBottom: 14, letterSpacing: 1 },
-  iL: { fontSize: 12, marginBottom: 6, fontWeight: '600', textTransform: 'uppercase' },
+  iL: { fontSize: 12, marginBottom: 6, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
   
   input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, minHeight: 50 },
   errT: { color: '#ef4444', fontSize: 10, marginTop: 4, fontWeight: 'bold', position: 'absolute', bottom: -16 },
