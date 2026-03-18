@@ -166,7 +166,7 @@ export default function App() {
   if (!isLoaded) return null;
 
   // ==========================================
-  // 1. KATMAN: GİRİŞ (PORTAL) EKRANI
+  // 1. KATMAN: GİRİŞ EKRANI
   // ==========================================
   if (!isEntered) {
     return (
@@ -199,13 +199,11 @@ export default function App() {
 
           <Text style={[styles.label, { color: theme.accent, marginTop: 30 }]}>KİMLİK BİLGİLERİ</Text>
           <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
-          {/* PLACEHOLDER SİLİNDİ */}
           <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]} value={studentName} onChangeText={setStudentName} />
           
           <Text style={[styles.iL, { color: theme.text }]}>SINIF</Text>
           <View style={[styles.classBox, { backgroundColor: theme.bg, borderColor: theme.border, marginBottom: 30 }]}>
             <Text style={[styles.prefix, { color: theme.text, borderRightColor: theme.border }]}>{selectedCourse}</Text>
-            {/* PLACEHOLDER SİLİNDİ */}
             <TextInput style={[styles.inputNoBorder, { color: theme.text }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} keyboardType="numeric" maxLength={2} />
           </View>
 
@@ -299,17 +297,16 @@ export default function App() {
             <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}>
               <Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text>
             </TouchableOpacity>
+
+            {/* İŞTE ÇÖZÜM: SIFIRLA BUTONU ORTALAMA KUTUSUNUN İÇİNE GELDİ */}
+            <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
+              <Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text>
+            </TouchableOpacity>
           </View>
         )}
 
-        {/* TÜM NOTLARI SIFIRLA BUTONU ENTEGRASYON PANELİNE TAŞINDI */}
-
+        {/* İŞTE ÇÖZÜM: MESAJ KUTUSU TAMAMEN AYRILDI VE UZAKLAŞTIRILDI (marginTop: 40) */}
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          {/* İŞTE ÇÖZÜM: SIFIRLA BUTONU BURAYA GELDİ, KIRMIZI KUTUCUK (image_9.png gibi) */}
-          <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
-            <Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text>
-          </TouchableOpacity>
-
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
           <View style={styles.feedbackInputGroup}>
             <TextInput 
@@ -320,14 +317,12 @@ export default function App() {
               maxLength={500}
               multiline={true}
             />
-            {/* Gönder butonu mor */}
             <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
               <Text style={styles.fSendBtnT}>Gönder</Text>
             </TouchableOpacity>
           </View>
         </View>
         
-        {/* İŞTE ÇÖZÜM: Karakter aralığı (letterSpacing: 0.5) standarda çekildi */}
         <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
 
       </ScrollView>
@@ -385,43 +380,41 @@ const styles = StyleSheet.create({
   resN: { fontSize: 32, fontWeight: '900' },
   detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
+  
   waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
   waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
-  // SIFIRLA BUTONU STİLLERİ ( image_9.png gibi kırmızı kutucuk )
+  // İŞTE ÇÖZÜM: WhatsApp butonu ile aynı ölçülere ve simetriye kavuştu
   resetBtn: { 
     width: '100%',
-    padding: 10, // padding azaltıldı
-    borderRadius: 12, 
+    padding: 16, // waBtn ile aynı
+    borderRadius: 10, // waBtn ile aynı
     alignItems: 'center', 
-    backgroundColor: '#ef4444', // Kırmızı accent
-    alignSelf: 'center', 
-    marginBottom: 24, // Mesaj etiketi ile boşluk
+    backgroundColor: '#ef4444', 
+    marginTop: 12, // WhatsApp butonuyla arasına mesafe
+    marginBottom: 0, 
   },
   resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   
-  // İŞTE ÇÖZÜM: Kutucuklar birleşmişti, buraya düzen geldi ( bağımsız öğeler )
+  // İŞTE ÇÖZÜM: Geri Bildirim Kartı izole edildi ve uzaklaştırıldı (marginTop: 40)
   feedbackCard: {
     borderRadius: 16, 
     borderWidth: 1,
-    padding: 16, // Karmaşıklığı azaltmak için iç boşluk azaltıldı
-    marginTop: 0, 
+    padding: 20, 
+    marginTop: 40, // Ortalama kutusundan UZAK
     marginBottom: 30, 
   },
   
   feedbackTitle: { fontSize: 16, fontWeight: '800', marginBottom: 16 },
-  
-  // İŞTE ÇÖZÜM: Yatay Geri Bildirim Formu ( TextInput ve Düğme yan yana )
   feedbackInputGroup: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
   
-  // İŞTE ÇÖZÜM: Mesaj kutusu bağımsız ( image_1.png/image_9.png gibi )
   fInputMultiline: { 
     flex: 1, 
     borderWidth: 1, 
     borderRadius: 12, 
     padding: 16, 
     fontSize: 15,
-    minHeight: 130, // image_7.png UX notuna göre daha derin kutu
+    minHeight: 130, 
     textAlignVertical: 'top'
   },
   fSendBtn: { 
@@ -432,14 +425,13 @@ const styles = StyleSheet.create({
   },
   fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
   
-  // İŞTE ÇÖZÜM: Karakter aralığı (letterSpacing: 0.5) standarda çekildi
   footerBrand: { 
     textAlign: 'center', 
     color: '#64748b', 
     fontSize: 16, 
     fontWeight: '800', 
-    letterSpacing: 0.5, // 2'den 0.5'e çekildi
-    marginTop: 15, // Kart bittikten sonra nefes payı
+    letterSpacing: 0.5, 
+    marginTop: 15, 
     marginBottom: 20 
   }
 });
