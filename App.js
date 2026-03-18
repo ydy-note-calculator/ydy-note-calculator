@@ -294,23 +294,24 @@ export default function App() {
             {results.fH && <Text style={[styles.detailT, {color: theme.textSecondary}]}>Yıl Sonu: {results.fH}</Text>}
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
             
-            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}>
-              <Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text>
-            </TouchableOpacity>
-
-            {/* İŞTE ÇÖZÜM: SIFIRLA BUTONU ORTALAMA KUTUSUNUN İÇİNE GELDİ */}
+            {/* İŞTE ÇÖZÜM: BUTONLAR YER DEĞİŞTİRDİ */}
             <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}>
               <Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}>
+              <Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* İŞTE ÇÖZÜM: MESAJ KUTUSU TAMAMEN AYRILDI VE UZAKLAŞTIRILDI (marginTop: 40) */}
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.feedbackTitle, {color: theme.text}]}>Öneri veya sorunlarınızı paylaşın:</Text>
           <View style={styles.feedbackInputGroup}>
+            {/* İŞTE ÇÖZÜM: Yönlendirici Placeholder Metni Eklendi */}
             <TextInput 
               style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
+              placeholder="Uygulama ile ilgili soru, öneri ve şikayetlerinizi buraya yazabilirsiniz..." 
               placeholderTextColor={theme.textSecondary}
               value={feedbackText}
               onChangeText={setFeedbackText}
@@ -381,27 +382,33 @@ const styles = StyleSheet.create({
   detailT: { fontSize: 16, fontWeight: '600', marginTop: 4 },
   targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
   
-  waBtn: { backgroundColor: '#25D366', marginTop: 24, padding: 16, borderRadius: 10, alignItems: 'center' },
-  waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  
-  // İŞTE ÇÖZÜM: WhatsApp butonu ile aynı ölçülere ve simetriye kavuştu
+  // İŞTE ÇÖZÜM: Butonların yerleri ve marjları kusursuz şekilde değiştirildi
   resetBtn: { 
     width: '100%',
-    padding: 16, // waBtn ile aynı
-    borderRadius: 10, // waBtn ile aynı
+    padding: 16, 
+    borderRadius: 10, 
     alignItems: 'center', 
     backgroundColor: '#ef4444', 
-    marginTop: 12, // WhatsApp butonuyla arasına mesafe
+    marginTop: 24, // İlk buton olduğu için üstteki yazılara uzaklığı 24 oldu
     marginBottom: 0, 
   },
   resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
+
+  waBtn: { 
+    backgroundColor: '#25D366', 
+    marginTop: 12, // İkinci buton olduğu için aradaki mesafe 12 oldu
+    padding: 16, 
+    borderRadius: 10, 
+    alignItems: 'center' 
+  },
+  waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
-  // İŞTE ÇÖZÜM: Geri Bildirim Kartı izole edildi ve uzaklaştırıldı (marginTop: 40)
+  // İŞTE ÇÖZÜM: Mesafe devasa hale getirildi (marginTop: 60)
   feedbackCard: {
     borderRadius: 16, 
     borderWidth: 1,
     padding: 20, 
-    marginTop: 40, // Ortalama kutusundan UZAK
+    marginTop: 60, // İKİ KUTU ARASINDAKİ BOŞLUK ÇOK DAHA FAZLA OLDU
     marginBottom: 30, 
   },
   
