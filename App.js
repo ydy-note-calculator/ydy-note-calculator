@@ -43,8 +43,24 @@ export default function App() {
         { property: 'og:type', content: 'website' }
       ];
       metaTags.forEach(tag => { const m = document.createElement('meta'); Object.keys(tag).forEach(k => m.setAttribute(k, tag[k])); document.head.appendChild(m); });
-      const script1 = document.createElement('script'); script1.async = true; script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`; document.head.appendChild(script1);
-      const script2 = document.createElement('script'); script2.innerHTML = `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${GA_TRACKING_ID}');`; document.head.appendChild(script2);
+
+      if (!document.getElementById('google-analytics')) {
+        const script1 = document.createElement('script');
+        script1.id = 'google-analytics';
+        script1.async = true;
+        script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
+        document.head.appendChild(script1);
+
+        const script2 = document.createElement('script');
+        script2.id = 'google-analytics-config';
+        script2.innerHTML = `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GA_TRACKING_ID}', { 'send_page_view': true });
+        `;
+        document.head.appendChild(script2);
+      }
     }
     loadSavedData();
   }, []);
@@ -139,7 +155,7 @@ export default function App() {
     return (
       <View style={styles.flexItem}>
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
-        <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: isInvalid(val) ? '#ef4444' : theme.border }]} keyboardType="numeric" value={val} onChangeText={t => handleInputChange(field, index, t)} maxLength={3} placeholder="0" placeholderTextColor={theme.textSecondary}/>
+        <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: isInvalid(val) ? '#ef4444' : theme.border }]} keyboardType="numeric" value={val} onChangeText={t => handleInputChange(field, index, t)} maxLength={3} placeholder="" />
         {isInvalid(val) && <Text style={styles.errT}>!</Text>}
       </View>
     );
@@ -167,7 +183,6 @@ export default function App() {
           <Text style={[styles.loginTitle, { color: theme.text }]}>YDY</Text>
           <Text style={[styles.loginSubtitle, { color: theme.accent }]}>Not Hesaplama Sistemi</Text>
 
-          {/* İŞTE ÇÖZÜM: KUR SEÇİMİ İLK BAŞA ALINDI */}
           <Text style={[styles.label, { color: theme.accent, marginTop: 30 }]}>KUR SEÇİMİ</Text>
           <View style={styles.simetricRow}>
             {['A', 'B', 'C'].map((k, i) => (
@@ -182,13 +197,14 @@ export default function App() {
 
           <Text style={[styles.label, { color: theme.accent, marginTop: 30 }]}>KİMLİK BİLGİLERİ</Text>
           <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
-          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]} value={studentName} onChangeText={setStudentName} placeholder="Örn: Alparslan Soyak" placeholderTextColor={theme.textSecondary}/>
+          {/* PLACEHOLDER SİLİNDİ */}
+          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]} value={studentName} onChangeText={setStudentName} />
           
-          {/* İŞTE ÇÖZÜM: YAZI "SINIF" YAPILDI VE İKİ BÖLÜMLÜ KUTU EKLENDİ */}
           <Text style={[styles.iL, { color: theme.text }]}>SINIF</Text>
           <View style={[styles.classBox, { backgroundColor: theme.bg, borderColor: theme.border, marginBottom: 30 }]}>
             <Text style={[styles.prefix, { color: theme.text, borderRightColor: theme.border }]}>{selectedCourse}</Text>
-            <TextInput style={[styles.inputNoBorder, { color: theme.text }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} placeholder="12" placeholderTextColor={theme.textSecondary} keyboardType="numeric" maxLength={2}/>
+            {/* PLACEHOLDER SİLİNDİ */}
+            <TextInput style={[styles.inputNoBorder, { color: theme.text }]} value={studentClassNum} onChangeText={t => setStudentClassNum(t.replace(/[^0-9]/g, '').slice(0, 2))} keyboardType="numeric" maxLength={2} />
           </View>
 
           <TouchableOpacity style={[styles.loginBtn, {backgroundColor: theme.accent}]} onPress={handleLogin}>
@@ -231,8 +247,6 @@ export default function App() {
             <Text style={{fontSize: 18}}>⚙️</Text>
           </TouchableOpacity>
         </View>
-
-        {/* ANA EKRANDAN KUR SEÇİMİ TAMAMEN KALDIRILDI. EKRAN ARTIK DAHA FERAH. */}
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text>
