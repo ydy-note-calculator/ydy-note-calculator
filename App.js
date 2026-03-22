@@ -29,7 +29,6 @@ export default function App() {
   const [targetNote, setTargetNote] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
 
-  // Sinyal Takip Sayaçları
   const debounceTimer = React.useRef(null);
   const calcCount = React.useRef(0);
   const resetCount = React.useRef(0);
@@ -89,19 +88,17 @@ export default function App() {
     return () => clearTimeout(debounceTimer.current);
   }, [grades, selectedCourse, studentName, activeTheme]);
 
-  // SİNYAL: TEMA SEÇİMİ
   const handleThemeChange = (newTheme) => {
     setActiveTheme(newTheme);
     if (window.gtag) {
-      window.gtag('event', 'change_theme', { 'event_category': 'Preferences', 'event_label': `Tema: ${newTheme}` });
+      window.gtag('event', 'tema_degisti', { 'event_category': 'Tercihler', 'event_label': `Tema: ${newTheme}` });
     }
   };
 
-  // SİNYAL: KUR SEÇİMİ
   const handleCourseSelection = (course) => {
     setSelectedCourse(course);
     if (window.gtag) {
-      window.gtag('event', 'select_course', { 'event_category': 'Engagement', 'event_label': `${course} Kuru Seçildi` });
+      window.gtag('event', 'kur_secildi', { 'event_category': 'Etkilesim', 'event_label': `${course} Kuru Seçildi` });
     }
   };
 
@@ -151,33 +148,28 @@ export default function App() {
       }
     }
     
-    // ANALİTİK MERKEZİ
     if (ort > 0 && window.gtag && JSON.stringify(results) !== JSON.stringify(res)) {
-       // SİNYAL: HESAPLAMA YAPILDI
-       window.gtag('event', 'calculate_grade', { 'event_category': 'Performance', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}` });
+       window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}` });
        
-       // SİNYAL: AKADEMİK KRİZ / HEDEF
        if (localTargetText) {
-         window.gtag('event', 'academic_target', { 'event_category': 'Performance', 'event_label': localTargetText });
+         window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
        }
 
-       // SİNYAL: WHAT-IF SİMÜLASYONU (Sonuç varken tekrar hesaplama)
        calcCount.current += 1;
        if (calcCount.current > 1) {
-         window.gtag('event', 'what_if_simulation', { 'event_category': 'Engagement', 'event_label': `Senaryo Denemesi | Yeni Ort: ${ort.toFixed(2)}` });
+         window.gtag('event', 'senaryo_denemesi', { 'event_category': 'Etkilesim', 'event_label': `Senaryo Denemesi | Yeni Ort: ${ort.toFixed(2)}` });
        }
     }
 
     setResults(res);
   };
 
-  // SİNYAL: VİRAL KULLANIM (ÇOKLU SIFIRLAMA)
   const handleReset = () => {
     setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''});
-    calcCount.current = 0; // Yeni bir hesaplama döngüsü başlat
+    calcCount.current = 0; 
     resetCount.current += 1;
     if (window.gtag) {
-      window.gtag('event', 'viral_reset', { 'event_category': 'Engagement', 'event_label': `Çoklu Hesaplama (Sıfırlama Sayısı: ${resetCount.current})` });
+      window.gtag('event', 'coklu_sifirlama', { 'event_category': 'Etkilesim', 'event_label': `Çoklu Hesaplama (Sıfırlama Sayısı: ${resetCount.current})` });
     }
   };
 
@@ -191,14 +183,14 @@ export default function App() {
     text += `\nKendi notunuzu hesaplamak için sistemi kullanabilirsiniz:\n${window.location.href}`;
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
     
-    if (window.gtag) window.gtag('event', 'share_whatsapp', { 'event_category': 'Social', 'event_label': 'WhatsApp Paylaşımı Yapıldı' });
+    if (window.gtag) window.gtag('event', 'whatsapp_paylasimi', { 'event_category': 'Sosyal', 'event_label': 'WhatsApp Paylaşımı Yapıldı' });
   };
 
   const handleSendFeedback = () => {
     if (!feedbackText.trim() || !window.gtag) return;
     const name = studentName.trim() || 'İsimsiz';
     const payload = `[${selectedCourse}] ${name}: ${feedbackText.trim()}`;
-    window.gtag('event', 'user_feedback_text', { 'event_category': 'Feedback', 'event_label': payload });
+    window.gtag('event', 'kullanici_mesaji', { 'event_category': 'GeriBildirim', 'event_label': payload });
     alert('Mesajınız başarıyla iletildi!'); setFeedbackText(''); 
   };
 
@@ -213,9 +205,8 @@ export default function App() {
           value={val} 
           onChangeText={t => {
             const v = t === '' ? '' : t.replace(/[^0-9]/g, '');
-            // SİNYAL: KULLANICI HATASI (>100 GİRİŞİ)
             if (parseInt(v) > 100 && parseInt(val || '0') <= 100) {
-              if (window.gtag) window.gtag('event', 'input_error', { 'event_category': 'User Error', 'event_label': `Hatalı Not (>100): ${label}` });
+              if (window.gtag) window.gtag('event', 'hatali_giris', { 'event_category': 'Hata', 'event_label': `Hatalı Not (>100): ${label}` });
             }
             if (Array.isArray(grades[field])) { const n = [...grades[field]]; n[index] = v; setGrades({ ...grades, [field]: n }); } 
             else { setGrades({ ...grades, [field]: v }); }
@@ -354,4 +345,3 @@ const styles = StyleSheet.create({
   fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   footerBrand: { textAlign: 'center', color: '#64748b', fontSize: 16, fontWeight: '800', marginBottom: 20 }
 });
-              
