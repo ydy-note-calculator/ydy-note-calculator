@@ -149,8 +149,13 @@ export default function App() {
     }
     
     if (ort > 0 && window.gtag && JSON.stringify(results) !== JSON.stringify(res)) {
+       // ANA SİNYAL: ORTALAMA VE DURUM
        window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}` });
        
+       // İŞTE ÇÖZÜM: BİREBİR NOT DETAYLARI SİNYALİ (KARNE)
+       const detayText = `Q:[${grades.quiz.map(v=>v||'-').join(',')}] V:[${grades.vize.map(v=>v||'-').join(',')}] W:${grades.writing||'-'} S:${grades.sunum||'-'} K:${grades.kanaat||'-'} O:${grades.odev||'-'} F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
+       window.gtag('event', 'not_detaylari', { 'event_category': 'Performans', 'event_label': detayText });
+
        if (localTargetText) {
          window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
        }
