@@ -149,12 +149,29 @@ export default function App() {
     }
     
     if (ort > 0 && window.gtag && JSON.stringify(results) !== JSON.stringify(res)) {
-       // ANA SİNYAL: ORTALAMA VE DURUM
-       window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}` });
        
-       // İŞTE ÇÖZÜM: BİREBİR NOT DETAYLARI SİNYALİ (KARNE)
        const detayText = `Q:[${grades.quiz.map(v=>v||'-').join(',')}] V:[${grades.vize.map(v=>v||'-').join(',')}] W:${grades.writing||'-'} S:${grades.sunum||'-'} K:${grades.kanaat||'-'} O:${grades.odev||'-'} F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
-       window.gtag('event', 'not_detaylari', { 'event_category': 'Performans', 'event_label': detayText });
+       
+       // İŞTE ÇÖZÜM: GOOGLE ANALYTICS İÇİN "SAF MATEMATİK" PAKETİ
+       let numericParams = {
+         'event_category': 'Performans',
+         'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}`,
+         'kur_seviyesi': selectedCourse,
+         'karne_ozeti': detayText,
+         'value': parseFloat(ort.toFixed(2)) // Ana Ortalama (Google bunu otomatik toplar ve böler)
+       };
+
+       // Girilen her notu saf sayı olarak pakete ekle (Boş kutular gönderilmez, ortalamayı bozmaz)
+       if (grades.quiz[0] !== '') numericParams.quiz_1 = parseFloat(grades.quiz[0]);
+       if (grades.quiz[1] !== '') numericParams.quiz_2 = parseFloat(grades.quiz[1]);
+       if (grades.vize[0] !== '') numericParams.vize_1 = parseFloat(grades.vize[0]);
+       if (grades.vize[1] !== '') numericParams.vize_2 = parseFloat(grades.vize[1]);
+       if (grades.writing !== '') numericParams.writing_notu = parseFloat(grades.writing);
+       if (grades.final !== '') numericParams.final_notu = parseFloat(grades.final);
+       if (grades.butunleme !== '') numericParams.butunleme_notu = parseFloat(grades.butunleme);
+
+       // Tüm bu sayılar Google'a tek seferde fırlatılır
+       window.gtag('event', 'not_hesaplandi', numericParams);
 
        if (localTargetText) {
          window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
