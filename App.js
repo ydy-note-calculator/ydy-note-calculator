@@ -29,6 +29,11 @@ export default function App() {
   const [targetNote, setTargetNote] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
 
+  // Sinyal Takip Sayaçları
+  const debounceTimer = React.useRef(null);
+  const calcCount = React.useRef(0);
+  const resetCount = React.useRef(0);
+
   const theme = THEMES[activeTheme] || THEMES.hacker;
 
   useEffect(() => {
@@ -74,8 +79,6 @@ export default function App() {
     try { await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, activeTheme })); } catch (e) { console.error(e); }
   };
 
-  const debounceTimer = React.useRef(null);
-
   useEffect(() => {
     if (!isLoaded) return;
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -86,7 +89,22 @@ export default function App() {
     return () => clearTimeout(debounceTimer.current);
   }, [grades, selectedCourse, studentName, activeTheme]);
 
-  // İŞTE ÇÖZÜM: BÜTÜNLEME VE FİNAL İÇİN DİNAMİK HEDEF HESAPLAMA
+  // SİNYAL: TEMA SEÇİMİ
+  const handleThemeChange = (newTheme) => {
+    setActiveTheme(newTheme);
+    if (window.gtag) {
+      window.gtag('event', 'change_theme', { 'event_category': 'Preferences', 'event_label': `Tema: ${newTheme}` });
+    }
+  };
+
+  // SİNYAL: KUR SEÇİMİ
+  const handleCourseSelection = (course) => {
+    setSelectedCourse(course);
+    if (window.gtag) {
+      window.gtag('event', 'select_course', { 'event_category': 'Engagement', 'event_label': `${course} Kuru Seçildi` });
+    }
+  };
+
   const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
     const vP = (grades.vize.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 60;
@@ -97,6 +115,7 @@ export default function App() {
     
     const needed = Math.ceil((65 - (ort * 0.4)) / 0.6);
     let res = { ortalama: ort.toFixed(2), durum: '', renk: '', fH: null, bH: null };
+    let localTargetText = null;
 
     if (ort >= limit) {
       res.durum = 'Geçtiniz ✓'; res.renk = theme.accent;
@@ -104,8 +123,13 @@ export default function App() {
       setTargetNote({ type: 'pass', text: 'Geçmek için ortalaman yeterli!' });
     } else if (grades.final === '') {
       res.durum = 'Finale Kaldınız'; res.renk = '#ef4444';
-      if (needed <= 100) setTargetNote({ type: 'target', text: `Finalde gereken: ${needed}` });
-      else setTargetNote({ type: 'fail', text: '100 alsan da geçilemiyor!' });
+      if (needed <= 100) {
+        setTargetNote({ type: 'target', text: `Finalde gereken: ${needed}` });
+        localTargetText = `Final Hedefi: ${needed}`;
+      } else {
+        setTargetNote({ type: 'fail', text: '100 alsan da geçilemiyor!' });
+        localTargetText = 'Kritik Durum: Finalde 100 yetmiyor';
+      }
     } else {
       const fS = (parseFloat(grades.final) * 0.6 + ort * 0.4).toFixed(2); res.fH = fS; 
       if (fS >= 64.5) {
@@ -113,39 +137,61 @@ export default function App() {
         setTargetNote(null);
       } else if (grades.butunleme === '') {
         res.durum = 'Bütünlemeye Kaldınız'; res.renk = '#ef4444';
-        // FİNALDEN KALAN İÇİN BÜTÜNLEME HEDEFİ
-        if (needed <= 100) setTargetNote({ type: 'target', text: `Bütünlemede gereken: ${needed}` });
-        else setTargetNote({ type: 'fail', text: 'Bütünlemede 100 alsan da geçilemiyor!' });
+        if (needed <= 100) {
+          setTargetNote({ type: 'target', text: `Bütünlemede gereken: ${needed}` });
+          localTargetText = `Büt Hedefi: ${needed}`;
+        } else {
+          setTargetNote({ type: 'fail', text: 'Bütünlemede 100 alsan da geçilemiyor!' });
+          localTargetText = 'Kritik Durum: Bütte 100 yetmiyor';
+        }
       } else {
         const bS = (parseFloat(grades.butunleme) * 0.6 + ort * 0.4).toFixed(2); res.bH = bS;
         const isP = bS >= 64.5; res.durum = isP ? 'Bütünleme ile Geçtiniz ✓' : 'Kaldınız ✗'; res.renk = isP ? theme.accent : '#ef4444';
         setTargetNote(null);
       }
     }
+    
+    // ANALİTİK MERKEZİ
+    if (ort > 0 && window.gtag && JSON.stringify(results) !== JSON.stringify(res)) {
+       // SİNYAL: HESAPLAMA YAPILDI
+       window.gtag('event', 'calculate_grade', { 'event_category': 'Performance', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}` });
+       
+       // SİNYAL: AKADEMİK KRİZ / HEDEF
+       if (localTargetText) {
+         window.gtag('event', 'academic_target', { 'event_category': 'Performance', 'event_label': localTargetText });
+       }
+
+       // SİNYAL: WHAT-IF SİMÜLASYONU (Sonuç varken tekrar hesaplama)
+       calcCount.current += 1;
+       if (calcCount.current > 1) {
+         window.gtag('event', 'what_if_simulation', { 'event_category': 'Engagement', 'event_label': `Senaryo Denemesi | Yeni Ort: ${ort.toFixed(2)}` });
+       }
+    }
+
     setResults(res);
   };
 
-  // WHATSAPP PAYLAŞIMINA DİNAMİK VERİ EKLENDİ
+  // SİNYAL: VİRAL KULLANIM (ÇOKLU SIFIRLAMA)
+  const handleReset = () => {
+    setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''});
+    calcCount.current = 0; // Yeni bir hesaplama döngüsü başlat
+    resetCount.current += 1;
+    if (window.gtag) {
+      window.gtag('event', 'viral_reset', { 'event_category': 'Engagement', 'event_label': `Çoklu Hesaplama (Sıfırlama Sayısı: ${resetCount.current})` });
+    }
+  };
+
   const shareOnWhatsApp = () => {
     if (!results) return;
-    
     let text = `📊 YDY Not Hesaplama Sonucum\n\n• Kur Seviyesi: ${selectedCourse} Kuru\n• Güncel Ortalama: ${results.ortalama}\n`;
-    
-    if (grades.final !== '' && results.fH && grades.butunleme === '') {
-      text += `• Yıl Sonu Notu: ${results.fH}\n`;
-    }
-    if (grades.butunleme !== '' && results.bH) {
-      text += `• Büt. Sonu Notu: ${results.bH}\n`;
-    }
-
+    if (grades.final !== '' && results.fH && grades.butunleme === '') { text += `• Yıl Sonu Notu: ${results.fH}\n`; }
+    if (grades.butunleme !== '' && results.bH) { text += `• Büt. Sonu Notu: ${results.bH}\n`; }
     text += `• Akademik Durum: ${results.durum}\n`;
-    
-    if (targetNote && targetNote.text) {
-      text += `• ${targetNote.text}\n`;
-    }
-    
+    if (targetNote && targetNote.text) { text += `• ${targetNote.text}\n`; }
     text += `\nKendi notunuzu hesaplamak için sistemi kullanabilirsiniz:\n${window.location.href}`;
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
+    
+    if (window.gtag) window.gtag('event', 'share_whatsapp', { 'event_category': 'Social', 'event_label': 'WhatsApp Paylaşımı Yapıldı' });
   };
 
   const handleSendFeedback = () => {
@@ -167,6 +213,10 @@ export default function App() {
           value={val} 
           onChangeText={t => {
             const v = t === '' ? '' : t.replace(/[^0-9]/g, '');
+            // SİNYAL: KULLANICI HATASI (>100 GİRİŞİ)
+            if (parseInt(v) > 100 && parseInt(val || '0') <= 100) {
+              if (window.gtag) window.gtag('event', 'input_error', { 'event_category': 'User Error', 'event_label': `Hatalı Not (>100): ${label}` });
+            }
             if (Array.isArray(grades[field])) { const n = [...grades[field]]; n[index] = v; setGrades({ ...grades, [field]: n }); } 
             else { setGrades({ ...grades, [field]: v }); }
           }} 
@@ -190,7 +240,7 @@ export default function App() {
           </View>
           <View style={[styles.themeSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0 }]}>
             {Object.values(THEMES).map(t => (
-              <TouchableOpacity key={t.id} onPress={() => setActiveTheme(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
+              <TouchableOpacity key={t.id} onPress={() => handleThemeChange(t.id)} style={[styles.themeBox, { backgroundColor: t.card, borderColor: activeTheme === t.id ? t.accent : t.border }]}>
                 <Text style={styles.themeIcon}>{t.icon}</Text>
               </TouchableOpacity>
             ))}
@@ -201,7 +251,7 @@ export default function App() {
           <Text style={[styles.label, { color: theme.accent }]}>KUR SEÇİMİ</Text>
           <View style={styles.simetricRow}>
             {['A', 'B', 'C'].map((k, i) => (
-              <TouchableOpacity key={k} onPress={() => setSelectedCourse(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
+              <TouchableOpacity key={k} onPress={() => handleCourseSelection(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
                 <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>{k} KURU</Text>
               </TouchableOpacity>
             ))}
@@ -240,7 +290,7 @@ export default function App() {
             <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
             <Text style={[styles.resN, { color: theme.text }]}>ORTALAMA: {results.ortalama}</Text>
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
-            <TouchableOpacity style={styles.resetBtn} onPress={() => setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''})}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.resetBtn} onPress={handleReset}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
             <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
           </View>
         )}
@@ -304,3 +354,4 @@ const styles = StyleSheet.create({
   fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   footerBrand: { textAlign: 'center', color: '#64748b', fontSize: 16, fontWeight: '800', marginBottom: 20 }
 });
+              
