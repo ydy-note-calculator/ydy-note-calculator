@@ -44,6 +44,7 @@ export default function App() {
   }, []);
 
   const setupWebEnvironment = () => {
+    // 1. ANALYTICS İSTİHBARAT MOTORU
     if (!document.getElementById('google-analytics')) {
       const script1 = document.createElement('script');
       script1.id = 'google-analytics'; script1.async = true;
@@ -54,10 +55,30 @@ export default function App() {
       script2.innerHTML = `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${GA_TRACKING_ID}', { 'send_page_view': true });`;
       document.head.appendChild(script2);
     }
+    
+    // 2. FAVICON (SEKME İKONU)
     if (!document.querySelector("link[rel*='icon']")) {
       const favicon = document.createElement('link'); favicon.type = 'image/png'; favicon.rel = 'shortcut icon';
       favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png';
       document.getElementsByTagName('head')[0].appendChild(favicon);
+    }
+
+    // 3. SEO VE GÖRÜNÜRLÜK ZIRHI
+    if (!document.querySelector("meta[name='description']")) {
+      const metaDesc = document.createElement('meta');
+      metaDesc.name = "description";
+      metaDesc.content = "Üniversite öğrencileri için en hızlı ve hatasız YDY Not Hesaplama Sistemi. A, B ve C kurları için vize, final ve bütünleme ortalamanızı anında öğrenin.";
+      document.head.appendChild(metaDesc);
+
+      const metaKeywords = document.createElement('meta');
+      metaKeywords.name = "keywords";
+      metaKeywords.content = "ydy not hesaplama, hazırlık atlama, vize final hesaplama, üniversite not ortalaması, ydy kur hesaplama, üniversite hazırlık";
+      document.head.appendChild(metaKeywords);
+      
+      const metaAuthor = document.createElement('meta');
+      metaAuthor.name = "author";
+      metaAuthor.content = "Alparslan Soyak";
+      document.head.appendChild(metaAuthor);
     }
   };
 
@@ -152,16 +173,14 @@ export default function App() {
        
        const detayText = `Q:[${grades.quiz.map(v=>v||'-').join(',')}] V:[${grades.vize.map(v=>v||'-').join(',')}] W:${grades.writing||'-'} S:${grades.sunum||'-'} K:${grades.kanaat||'-'} O:${grades.odev||'-'} F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
        
-       // İŞTE ÇÖZÜM: GOOGLE ANALYTICS İÇİN "SAF MATEMATİK" PAKETİ
        let numericParams = {
          'event_category': 'Performans',
          'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}`,
          'kur_seviyesi': selectedCourse,
          'karne_ozeti': detayText,
-         'value': parseFloat(ort.toFixed(2)) // Ana Ortalama (Google bunu otomatik toplar ve böler)
+         'value': parseFloat(ort.toFixed(2)) 
        };
 
-       // Girilen her notu saf sayı olarak pakete ekle (Boş kutular gönderilmez, ortalamayı bozmaz)
        if (grades.quiz[0] !== '') numericParams.quiz_1 = parseFloat(grades.quiz[0]);
        if (grades.quiz[1] !== '') numericParams.quiz_2 = parseFloat(grades.quiz[1]);
        if (grades.vize[0] !== '') numericParams.vize_1 = parseFloat(grades.vize[0]);
@@ -170,7 +189,6 @@ export default function App() {
        if (grades.final !== '') numericParams.final_notu = parseFloat(grades.final);
        if (grades.butunleme !== '') numericParams.butunleme_notu = parseFloat(grades.butunleme);
 
-       // Tüm bu sayılar Google'a tek seferde fırlatılır
        window.gtag('event', 'not_hesaplandi', numericParams);
 
        if (localTargetText) {
