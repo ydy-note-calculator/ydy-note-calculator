@@ -1,6 +1,6 @@
 {
   "name": "ydy-note-calculator",
-  "homepage": "https://YENI_KULLANICI_ADIN.github.io/ydy-note-calculator",
+  "homepage": "https://YENI_KULLANICI_ADIN.github.io/ydy-note-calculator/",
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
