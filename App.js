@@ -22,7 +22,8 @@ export default function App() {
   const [selectedCourse, setSelectedCourse] = useState('A');
   const [grades, setGrades] = useState({
     quiz: ['', '', '', ''], vize: ['', '', '', ''],
-    writing: '', sunum: '', kanaat: '', odev: '', final: '', butunleme: '',
+    writing: ['', ''], sunum: ['', ''], kanaat: ['', ''], odev: ['', ''], 
+    final: '', butunleme: '',
   });
 
   const [results, setResults] = useState(null);
@@ -74,7 +75,15 @@ export default function App() {
       const savedData = await AsyncStorage.getItem('@ydy_data');
       if (savedData) {
         const parsed = JSON.parse(savedData);
-        setGrades(parsed.grades || grades); setSelectedCourse(parsed.selectedCourse || 'A');
+        let loadedGrades = parsed.grades || grades;
+        // Sessiz Veri Göçü: Eski kullanıcıların verileri yeni dizi formatına çevrilir, sistem çökmez.
+        if (typeof loadedGrades.writing === 'string') loadedGrades.writing = [loadedGrades.writing, ''];
+        if (typeof loadedGrades.sunum === 'string') loadedGrades.sunum = [loadedGrades.sunum, ''];
+        if (typeof loadedGrades.kanaat === 'string') loadedGrades.kanaat = [loadedGrades.kanaat, ''];
+        if (typeof loadedGrades.odev === 'string') loadedGrades.odev = [loadedGrades.odev, ''];
+        
+        setGrades(loadedGrades);
+        setSelectedCourse(parsed.selectedCourse || 'A');
         setStudentName(parsed.studentName || '');
         if (parsed.activeTheme && THEMES[parsed.activeTheme]) setActiveTheme(parsed.activeTheme);
       }
@@ -115,8 +124,13 @@ export default function App() {
   const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
     const vP = (grades.vize.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 60;
-    const wP = (parseFloat(grades.writing) || 0) / 100 * 5; const sP = (parseFloat(grades.sunum) || 0) / 100 * 5;
-    const kP = (parseFloat(grades.kanaat) || 0) / 100 * 5; const oP = (parseFloat(grades.odev) || 0) / 100 * 5;
+    
+    // Katsayılar mutlak olarak 0.025 (%2.5) oranında işlenir
+    const wP = ((parseFloat(grades.writing[0]) || 0) * 0.025) + ((parseFloat(grades.writing[1]) || 0) * 0.025);
+    const sP = ((parseFloat(grades.sunum[0]) || 0) * 0.025) + ((parseFloat(grades.sunum[1]) || 0) * 0.025);
+    const kP = ((parseFloat(grades.kanaat[0]) || 0) * 0.025) + ((parseFloat(grades.kanaat[1]) || 0) * 0.025);
+    const oP = ((parseFloat(grades.odev[0]) || 0) * 0.025) + ((parseFloat(grades.odev[1]) || 0) * 0.025);
+    
     const ort = qP + vP + wP + sP + kP + oP;
     const limit = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
     
@@ -148,14 +162,26 @@ export default function App() {
     }
     
     if (ort > 0 && typeof window !== 'undefined' && window.gtag && JSON.stringify(results) !== JSON.stringify(res)) {
-       const detayText = `Q:[${grades.quiz.map(v=>v||'-').join(',')}] V:[${grades.vize.map(v=>v||'-').join(',')}] W:${grades.writing||'-'} S:${grades.sunum||'-'} K:${grades.kanaat||'-'} O:${grades.odev||'-'} F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
+       // Karne Özeti 1. ve 2. Dönem ayrımlarını ('|' sembolüyle) merkeze alır
+       const detayText = `Q:[${grades.quiz[0]||'-'},${grades.quiz[1]||'-'}|${grades.quiz[2]||'-'},${grades.quiz[3]||'-'}] V:[${grades.vize[0]||'-'},${grades.vize[1]||'-'}|${grades.vize[2]||'-'},${grades.vize[3]||'-'}] W:[${grades.writing[0]||'-'}|${grades.writing[1]||'-'}] S:[${grades.sunum[0]||'-'}|${grades.sunum[1]||'-'}] K:[${grades.kanaat[0]||'-'}|${grades.kanaat[1]||'-'}] O:[${grades.odev[0]||'-'}|${grades.odev[1]||'-'}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
        let numericParams = { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) };
 
        if (grades.quiz[0] !== '') numericParams.quiz_1 = parseFloat(grades.quiz[0]);
        if (grades.quiz[1] !== '') numericParams.quiz_2 = parseFloat(grades.quiz[1]);
+       if (grades.quiz[2] !== '') numericParams.quiz_3 = parseFloat(grades.quiz[2]);
+       if (grades.quiz[3] !== '') numericParams.quiz_4 = parseFloat(grades.quiz[3]);
        if (grades.vize[0] !== '') numericParams.vize_1 = parseFloat(grades.vize[0]);
        if (grades.vize[1] !== '') numericParams.vize_2 = parseFloat(grades.vize[1]);
-       if (grades.writing !== '') numericParams.writing_notu = parseFloat(grades.writing);
+       if (grades.vize[2] !== '') numericParams.vize_3 = parseFloat(grades.vize[2]);
+       if (grades.vize[3] !== '') numericParams.vize_4 = parseFloat(grades.vize[3]);
+       if (grades.writing[0] !== '') numericParams.writing_1 = parseFloat(grades.writing[0]);
+       if (grades.writing[1] !== '') numericParams.writing_2 = parseFloat(grades.writing[1]);
+       if (grades.sunum[0] !== '') numericParams.sunum_1 = parseFloat(grades.sunum[0]);
+       if (grades.sunum[1] !== '') numericParams.sunum_2 = parseFloat(grades.sunum[1]);
+       if (grades.kanaat[0] !== '') numericParams.kanaat_1 = parseFloat(grades.kanaat[0]);
+       if (grades.kanaat[1] !== '') numericParams.kanaat_2 = parseFloat(grades.kanaat[1]);
+       if (grades.odev[0] !== '') numericParams.odev_1 = parseFloat(grades.odev[0]);
+       if (grades.odev[1] !== '') numericParams.odev_2 = parseFloat(grades.odev[1]);
        if (grades.final !== '') numericParams.final_notu = parseFloat(grades.final);
        if (grades.butunleme !== '') numericParams.butunleme_notu = parseFloat(grades.butunleme);
 
@@ -169,7 +195,7 @@ export default function App() {
   };
 
   const handleReset = () => {
-    setGrades({quiz:['','','',''],vize:['','','',''],writing:'',sunum:'',kanaat:'',odev:'',final:'',butunleme:''});
+    setGrades({quiz:['','','',''],vize:['','','',''],writing:['',''],sunum:['',''],kanaat:['',''],odev:['',''],final:'',butunleme:''});
     calcCount.current = 0; resetCount.current += 1;
     if (typeof window !== 'undefined' && window.gtag) window.gtag('event', 'coklu_sifirlama', { 'event_category': 'Etkilesim', 'event_label': `Çoklu Hesaplama (Sıfırlama Sayısı: ${resetCount.current})` });
   };
@@ -243,10 +269,31 @@ export default function App() {
           </View>
         </View>
 
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}><Text style={[styles.label, { color: theme.accent }]}>QUIZ NOTLARI</Text><View style={styles.simetricRow}>{renderInput('QUIZ 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('QUIZ 2', 'quiz', 1)}</View><View style={{height: 16}}/><View style={styles.simetricRow}>{renderInput('QUIZ 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('QUIZ 4', 'quiz', 3)}</View></View>
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}><Text style={[styles.label, { color: theme.accent }]}>VİZE NOTLARI</Text><View style={styles.simetricRow}>{renderInput('VİZE 1', 'vize', 0)}<View style={styles.gap16}/>{renderInput('VİZE 2', 'vize', 1)}</View><View style={{height: 16}}/><View style={styles.simetricRow}>{renderInput('VİZE 3', 'vize', 2)}<View style={styles.gap16}/>{renderInput('VİZE 4', 'vize', 3)}</View></View>
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}><Text style={[styles.label, { color: theme.accent }]}>DİĞER NOTLAR</Text><View style={styles.simetricRow}>{renderInput('WRITING', 'writing')}<View style={styles.gap16}/>{renderInput('SUNUM ÖDEVİ', 'sunum')}</View><View style={{height: 16}}/><View style={styles.simetricRow}>{renderInput('KANAAT NOTU', 'kanaat')}<View style={styles.gap16}/>{renderInput('ÖDEV', 'odev')}</View></View>
+        {/* 1. DÖNEM BÖLÜMÜ */}
+        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.label, { color: theme.accent }]}>1. DÖNEM NOTLARI</Text>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('VİZE 1', 'vize', 0)}</View>
+          <View style={{height: 16}}/>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 2', 'quiz', 1)}<View style={styles.gap16}/>{renderInput('VİZE 2', 'vize', 1)}</View>
+          <View style={{height: 16}}/>
+          <View style={styles.simetricRow}>{renderInput('WRITING 1', 'writing', 0)}<View style={styles.gap16}/>{renderInput('SUNUM 1', 'sunum', 0)}</View>
+          <View style={{height: 16}}/>
+          <View style={styles.simetricRow}>{renderInput('KANAAT 1', 'kanaat', 0)}<View style={styles.gap16}/>{renderInput('ONLİNE ÖDEV 1', 'odev', 0)}</View>
+        </View>
+
+        {/* 2. DÖNEM BÖLÜMÜ */}
+        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.label, { color: theme.accent }]}>2. DÖNEM NOTLARI</Text>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('VİZE 3', 'vize', 2)}</View>
+          <View style={{height: 16}}/>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 4', 'quiz', 3)}<View style={styles.gap16}/>{renderInput('VİZE 4', 'vize', 3)}</View>
+          <View style={{height: 16}}/>
+          <View style={styles.simetricRow}>{renderInput('WRITING 2', 'writing', 1)}<View style={styles.gap16}/>{renderInput('SUNUM 2', 'sunum', 1)}</View>
+          <View style={{height: 16}}/>
+          <View style={styles.simetricRow}>{renderInput('KANAAT 2', 'kanaat', 1)}<View style={styles.gap16}/>{renderInput('ONLİNE ÖDEV 2', 'odev', 1)}</View>
+        </View>
         
+        {/* FİNAL VE BÜTÜNLEME */}
         <View style={styles.simetricRow}>
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('FİNAL', 'final')}</View><View style={styles.gap16} />
           <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('BÜTÜNLEME', 'butunleme')}</View>
@@ -265,44 +312,4 @@ export default function App() {
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>ÖNERİ VE GERİ BİLDİRİM</Text>
           <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
-          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} value={studentName} onChangeText={setStudentName} placeholder="ADINIZI GİRİNİZ" placeholderTextColor={theme.textSecondary} />
-          <TextInput style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} placeholder="ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ (Max 100 Karakter)..." placeholderTextColor={theme.textSecondary} value={feedbackText} onChangeText={setFeedbackText} maxLength={100} multiline={true} />
-          <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}><Text style={styles.fSendBtnT}>MESAJI GÖNDER</Text></TouchableOpacity>
-        </View>
-        <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
-      </ScrollView>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1 }, scroll: { padding: 16 },
-  headerRowMobile: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
-  headerRowDesktop: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative' },
-  titleContainer: { alignItems: 'center' },
-  title: { fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
-  subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
-  themeSelector: { flexDirection: 'row', gap: 8 },
-  themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
-  themeIcon: { fontSize: 16 },
-  section: { borderRadius: 16, padding: 18, marginBottom: 24, borderWidth: 1 },
-  label: { fontSize: 12, fontWeight: '800', marginBottom: 16, letterSpacing: 1 },
-  simetricRow: { flexDirection: 'row', width: '100%' }, flexItem: { flex: 1 }, gap16: { width: 16 },
-  kurBtn: { flex: 1, padding: 16, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
-  kurBtnT: { fontWeight: 'bold', fontSize: 15 },
-  iL: { fontSize: 12, marginBottom: 8, fontWeight: '800' },
-  input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, textAlign: 'center', minHeight: 50 },
-  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginBottom: 80 },
-  resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
-  resN: { fontSize: 32, fontWeight: '900' },
-  targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
-  resetBtn: { width: '100%', padding: 16, borderRadius: 10, alignItems: 'center', backgroundColor: '#ef4444', marginTop: 24 },
-  resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-  waBtn: { backgroundColor: '#25D366', marginTop: 12, padding: 16, borderRadius: 10, alignItems: 'center' },
-  waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  feedbackCard: { borderRadius: 16, borderWidth: 1, padding: 20, marginBottom: 30 },
-  fInputMultiline: { borderWidth: 1, borderRadius: 12, padding: 16, fontSize: 15, minHeight: 120, textAlignVertical: 'top', marginBottom: 16 },
-  fSendBtn: { borderRadius: 12, padding: 16, alignItems: 'center' },
-  fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  footerBrand: { textAlign: 'center', color: '#64748b', fontSize: 16, fontWeight: '800', marginBottom: 20 }
-});
+          <TextInput style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, ma
