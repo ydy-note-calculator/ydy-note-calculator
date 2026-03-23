@@ -268,8 +268,7 @@ export default function App() {
     alert('Mesajınız başarıyla iletildi!'); 
     setFeedbackText(''); 
   };
-
-  const renderInput = (label, field, index = null) => {
+    const renderInput = (label, field, index = null) => {
     const val = index !== null ? grades[field][index] : grades[field];
     return (
       <View style={styles.flexItem}>
@@ -371,4 +370,68 @@ export default function App() {
         )}
 
         <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[style
+          <Text style={[styles.label, { color: theme.accent }]}>ÖNERİ VE GERİ BİLDİRİM</Text>
+          <Text style={[styles.iL, { color: theme.text }]}>AD SOYAD</Text>
+          <TextInput 
+            style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} 
+            value={studentName} 
+            onChangeText={setStudentName} 
+            placeholder="ADINIZI GİRİNİZ" 
+            placeholderTextColor={theme.textSecondary} 
+          />
+          <TextInput 
+            style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
+            placeholder="ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ (Max 100 Karakter)..." 
+            placeholderTextColor={theme.textSecondary} 
+            value={feedbackText} 
+            onChangeText={setFeedbackText} 
+            maxLength={100} 
+            multiline={true} 
+          />
+          <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
+            <Text style={styles.fSendBtnT}>MESAJI GÖNDER</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 }, 
+  scroll: { padding: 16 },
+  headerRowMobile: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
+  headerRowDesktop: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative' },
+  titleContainer: { alignItems: 'center' },
+  title: { fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
+  subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  themeSelector: { flexDirection: 'row', gap: 8 },
+  themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
+  themeIcon: { fontSize: 16 },
+  section: { borderRadius: 16, padding: 18, marginBottom: 24, borderWidth: 1 },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 16, letterSpacing: 1 },
+  simetricRow: { flexDirection: 'row', width: '100%' }, 
+  flexItem: { flex: 1 }, 
+  gap16: { width: 16 },
+  kurBtn: { flex: 1, padding: 16, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+  kurBtnT: { fontWeight: 'bold', fontSize: 15 },
+  iL: { fontSize: 12, marginBottom: 8, fontWeight: '800' },
+  input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, textAlign: 'center', minHeight: 50 },
+  res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginBottom: 80 },
+  resSt: { fontWeight: 'bold', fontSize: 20, marginBottom: 4 },
+  resN: { fontSize: 32, fontWeight: '900' },
+  targetT: { fontSize: 14, marginTop: 12, fontWeight: '700' },
+  resetBtn: { width: '100%', padding: 16, borderRadius: 10, alignItems: 'center', backgroundColor: '#ef4444', marginTop: 24 },
+  resetBtnT: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
+  waBtn: { backgroundColor: '#25D366', marginTop: 12, padding: 16, borderRadius: 10, alignItems: 'center' },
+  waBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  feedbackCard: { borderRadius: 16, borderWidth: 1, padding: 20, marginBottom: 30 },
+  fInputMultiline: { borderWidth: 1, borderRadius: 12, padding: 16, fontSize: 15, minHeight: 120, textAlignVertical: 'top', marginBottom: 16 },
+  fSendBtn: { borderRadius: 12, padding: 16, alignItems: 'center' },
+  fSendBtnT: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  footerBrand: { textAlign: 'center', color: '#64748b', fontSize: 16, fontWeight: '800', marginBottom: 20 }
+});
+// --- DOSYA SONU (EOF) ---
+              
