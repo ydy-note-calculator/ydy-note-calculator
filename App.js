@@ -28,7 +28,7 @@ export default function App() {
     kanaat: ['', ''], 
     odev: ['', ''], 
     final: '', 
-    butunleme: '',
+    butunleme: ''
   });
 
   const [results, setResults] = useState(null);
@@ -60,12 +60,7 @@ export default function App() {
 
       const script2 = document.createElement('script');
       script2.id = 'google-analytics-config';
-      script2.innerHTML = `
-        window.dataLayer = window.dataLayer || []; 
-        function gtag(){dataLayer.push(arguments);} 
-        gtag('js', new Date()); 
-        gtag('config', '${GA_TRACKING_ID}', { 'send_page_view': true });
-      `;
+      script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_TRACKING_ID}',{'send_page_view':true});`;
       document.head.appendChild(script2);
     }
     
@@ -114,9 +109,7 @@ export default function App() {
   const saveData = async () => {
     if (!isLoaded) return;
     try { 
-      await AsyncStorage.setItem('@ydy_data', JSON.stringify({ 
-        grades, selectedCourse, studentName, activeTheme 
-      })); 
+      await AsyncStorage.setItem('@ydy_data', JSON.stringify({ grades, selectedCourse, studentName, activeTheme })); 
     } catch (e) { console.error(e); }
   };
 
@@ -135,20 +128,14 @@ export default function App() {
   const handleThemeChange = (newTheme) => {
     setActiveTheme(newTheme);
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'tema_degisti', { 
-        'event_category': 'Tercihler', 
-        'event_label': `Tema: ${newTheme}` 
-      });
+      window.gtag('event', 'tema_degisti', { 'event_category': 'Tercihler', 'event_label': `Tema: ${newTheme}` });
     }
   };
 
   const handleCourseSelection = (course) => {
     setSelectedCourse(course);
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'kur_secildi', { 
-        'event_category': 'Etkilesim', 
-        'event_label': `${course} Kuru Seçildi` 
-      });
+      window.gtag('event', 'kur_secildi', { 'event_category': 'Etkilesim', 'event_label': `${course} Kuru Seçildi` });
     }
   };
 
@@ -212,13 +199,7 @@ export default function App() {
     }
     
     if (ort > 0 && typeof window !== 'undefined' && window.gtag && JSON.stringify(results) !== JSON.stringify(res)) {
-       const detayText = `Q:[${grades.quiz[0]||'-'},${grades.quiz[1]||'-'}|${grades.quiz[2]||'-'},${grades.quiz[3]||'-'}] ` +
-                         `V:[${grades.vize[0]||'-'},${grades.vize[1]||'-'}|${grades.vize[2]||'-'},${grades.vize[3]||'-'}] ` +
-                         `W:[${grades.writing[0]||'-'}|${grades.writing[1]||'-'}] ` +
-                         `S:[${grades.sunum[0]||'-'}|${grades.sunum[1]||'-'}] ` +
-                         `K:[${grades.kanaat[0]||'-'}|${grades.kanaat[1]||'-'}] ` +
-                         `O:[${grades.odev[0]||'-'}|${grades.odev[1]||'-'}] ` +
-                         `F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
+       const detayText = `Q:[${grades.quiz[0]||'-'},${grades.quiz[1]||'-'}|${grades.quiz[2]||'-'},${grades.quiz[3]||'-'}] V:[${grades.vize[0]||'-'},${grades.vize[1]||'-'}|${grades.vize[2]||'-'},${grades.vize[3]||'-'}] W:[${grades.writing[0]||'-'}|${grades.writing[1]||'-'}] S:[${grades.sunum[0]||'-'}|${grades.sunum[1]||'-'}] K:[${grades.kanaat[0]||'-'}|${grades.kanaat[1]||'-'}] O:[${grades.odev[0]||'-'}|${grades.odev[1]||'-'}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
                          
        let numericParams = { 
          'event_category': 'Performans', 
@@ -248,29 +229,16 @@ export default function App() {
        if (grades.butunleme !== '') numericParams.butunleme_notu = parseFloat(grades.butunleme);
 
        window.gtag('event', 'not_hesaplandi', numericParams);
-       if (localTargetText) {
-         window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
-       }
+       if (localTargetText) window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
 
        calcCount.current += 1;
-       if (calcCount.current > 1) {
-         window.gtag('event', 'senaryo_denemesi', { 'event_category': 'Etkilesim', 'event_label': `Senaryo Denemesi | Yeni Ort: ${ort.toFixed(2)}` });
-       }
+       if (calcCount.current > 1) window.gtag('event', 'senaryo_denemesi', { 'event_category': 'Etkilesim', 'event_label': `Senaryo Denemesi | Yeni Ort: ${ort.toFixed(2)}` });
     }
     setResults(res);
   };
 
   const handleReset = () => {
-    setGrades({
-      quiz:['','','',''],
-      vize:['','','',''],
-      writing:['',''],
-      sunum:['',''],
-      kanaat:['',''],
-      odev:['',''],
-      final:'',
-      butunleme:''
-    });
+    setGrades({ quiz:['','','',''], vize:['','','',''], writing:['',''], sunum:['',''], kanaat:['',''], odev:['',''], final:'', butunleme:'' });
     calcCount.current = 0; 
     resetCount.current += 1;
     if (typeof window !== 'undefined' && window.gtag) {
@@ -307,14 +275,7 @@ export default function App() {
       <View style={styles.flexItem}>
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
         <TextInput 
-          style={[
-            styles.input, 
-            { 
-              backgroundColor: theme.bg, 
-              color: theme.text, 
-              borderColor: theme.border 
-            }
-          ]} 
+          style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
           keyboardType="numeric" 
           value={val} 
           onChangeText={t => {
@@ -371,67 +332,43 @@ export default function App() {
           </View>
         </View>
 
-        {/* 1. DÖNEM BÖLÜMÜ */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>1. DÖNEM NOTLARI</Text>
-          <View style={styles.simetricRow}>
-            {renderInput('QUIZ 1', 'quiz', 0)}
-            <View style={styles.gap16}/>
-            {renderInput('VİZE 1', 'vize', 0)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('VİZE 1', 'vize', 0)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>
-            {renderInput('QUIZ 2', 'quiz', 1)}
-            <View style={styles.gap16}/>
-            {renderInput('VİZE 2', 'vize', 1)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 2', 'quiz', 1)}<View style={styles.gap16}/>{renderInput('VİZE 2', 'vize', 1)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>
-            {renderInput('WRITING 1', 'writing', 0)}
-            <View style={styles.gap16}/>
-            {renderInput('SUNUM 1', 'sunum', 0)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('WRITING 1', 'writing', 0)}<View style={styles.gap16}/>{renderInput('SUNUM 1', 'sunum', 0)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>
-            {renderInput('KANAAT 1', 'kanaat', 0)}
-            <View style={styles.gap16}/>
-            {renderInput('ONLİNE ÖDEV 1', 'odev', 0)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('KANAAT 1', 'kanaat', 0)}<View style={styles.gap16}/>{renderInput('ONLİNE ÖDEV 1', 'odev', 0)}</View>
         </View>
 
-        {/* 2. DÖNEM BÖLÜMÜ */}
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>2. DÖNEM NOTLARI</Text>
-          <View style={styles.simetricRow}>
-            {renderInput('QUIZ 3', 'quiz', 2)}
-            <View style={styles.gap16}/>
-            {renderInput('VİZE 3', 'vize', 2)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('VİZE 3', 'vize', 2)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>
-            {renderInput('QUIZ 4', 'quiz', 3)}
-            <View style={styles.gap16}/>
-            {renderInput('VİZE 4', 'vize', 3)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('QUIZ 4', 'quiz', 3)}<View style={styles.gap16}/>{renderInput('VİZE 4', 'vize', 3)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>
-            {renderInput('WRITING 2', 'writing', 1)}
-            <View style={styles.gap16}/>
-            {renderInput('SUNUM 2', 'sunum', 1)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('WRITING 2', 'writing', 1)}<View style={styles.gap16}/>{renderInput('SUNUM 2', 'sunum', 1)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>
-            {renderInput('KANAAT 2', 'kanaat', 1)}
-            <View style={styles.gap16}/>
-            {renderInput('ONLİNE ÖDEV 2', 'odev', 1)}
-          </View>
+          <View style={styles.simetricRow}>{renderInput('KANAAT 2', 'kanaat', 1)}<View style={styles.gap16}/>{renderInput('ONLİNE ÖDEV 2', 'odev', 1)}</View>
         </View>
         
-        {/* FİNAL VE BÜTÜNLEME */}
         <View style={styles.simetricRow}>
-          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            {renderInput('FİNAL', 'final')}
-          </View>
+          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('FİNAL', 'final')}</View>
           <View style={styles.gap16} />
-          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            {renderInp
+          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput('BÜTÜNLEME', 'butunleme')}</View>
+        </View>
+
+        {results && (
+          <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
+            <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
+            <Text style={[styles.resN, { color: theme.text }]}>ORTALAMA: {results.ortalama}</Text>
+            {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
+            <TouchableOpacity style={styles.resetBtn} onPress={handleReset}><Text style={styles.resetBtnT}>Tüm Notları Sıfırla</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>WhatsApp ile Paylaş</Text></TouchableOpacity>
+          </View>
+        )}
+
+        <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[style
