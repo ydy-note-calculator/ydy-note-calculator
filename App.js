@@ -12,10 +12,12 @@ const THEMES = {
   hacker: { id: 'hacker', icon: '💻', bg: '#000000', card: '#052e16', text: '#4ade80', textSecondary: '#22c55e', border: '#166534', accent: '#a855f7' }
 };
 
+// MANTIKSAL ZIRH: Kusursuz Çeviri Sözlüğü (Akademik Literatür)
 const TRANSLATIONS = {
   tr: {
     sysTitle: 'YDY', sysSub: 'Not Hesaplama Sistemi',
     levelSelect: 'KUR SEÇİMİ', term1: '1. DÖNEM NOTLARI', term2: '2. DÖNEM NOTLARI',
+    quiz: 'QUIZ', vize: 'VİZE', writing: 'WRITING', sunum: 'SUNUM', kanaat: 'KANAAT', odev: 'ONLİNE ÖDEV', final: 'FİNAL', butunleme: 'BÜTÜNLEME',
     pass: 'Geçtiniz ✓', fail: 'Kaldınız ✗', 
     finalFail: 'Finale Kaldınız', butFail: 'Bütünlemeye Kaldınız',
     finalPass: 'Finalle Geçtiniz ✓', butPass: 'Bütünleme ile Geçtiniz ✓',
@@ -30,6 +32,7 @@ const TRANSLATIONS = {
   en: {
     sysTitle: 'SFL', sysSub: 'Grade Calculator',
     levelSelect: 'SELECT LEVEL', term1: 'TERM 1 GRADES', term2: 'TERM 2 GRADES',
+    quiz: 'QUIZ', vize: 'MIDTERM', writing: 'WRITING', sunum: 'PRESENTATION', kanaat: 'PARTICIPATION', odev: 'ONLINE ASSIGN.', final: 'FINAL', butunleme: 'MAKE-UP',
     pass: 'Passed ✓', fail: 'Failed ✗', 
     finalFail: 'Must Take Final', butFail: 'Must Take Make-up',
     finalPass: 'Passed via Final ✓', butPass: 'Passed via Make-up ✓',
@@ -147,9 +150,7 @@ export default function App() {
   const handleCourseSelection = (course) => {
     setSelectedCourse(course);
     if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', 'kur_secildi', { 'event_category': 'Etkilesim', 'event_label': `${course} Kuru` }); }
-  };
-  
-  const calculateGrade = () => {
+  };const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
     const vP = (grades.vize.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 60;
     const wP = ((parseFloat(grades.writing[0]) || 0) * 0.025) + ((parseFloat(grades.writing[1]) || 0) * 0.025);
@@ -187,21 +188,16 @@ export default function App() {
     }
     setResults(res);
 
-    // MANTIKSAL ZIRH: GA4 Spam Koruması (2 Saniye Gecikme) ve KESKİN DAĞILIM İSTİHBARATI
     if (ort > 0 && typeof window !== 'undefined' && window.gtag) {
        if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
        gaReportingTimer.current = setTimeout(() => {
          const detayText = `Q:[${grades.quiz[0]||'-'},${grades.quiz[1]||'-'}|${grades.quiz[2]||'-'},${grades.quiz[3]||'-'}] V:[${grades.vize[0]||'-'},${grades.vize[1]||'-'}|${grades.vize[2]||'-'},${grades.vize[3]||'-'}] W:[${grades.writing[0]||'-'}|${grades.writing[1]||'-'}] S:[${grades.sunum[0]||'-'}|${grades.sunum[1]||'-'}] K:[${grades.kanaat[0]||'-'}|${grades.kanaat[1]||'-'}] O:[${grades.odev[0]||'-'}|${grades.odev[1]||'-'}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
          
-         // 1. Tek Seferlik Genel Rapor (Spam engellendi)
          window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
          if (localTargetText) window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
 
-         // 2. Özel Etiket Dağılımı (Kör sayılar iptal, net etiketler gönderilir)
          const reportGrade = (sinavAdi, notDegeri) => {
-           if (notDegeri !== '') {
-             window.gtag('event', 'not_dagilimi', { 'event_category': 'Not_Istatistikleri', 'event_label': `${sinavAdi} | Puan: ${notDegeri}` });
-           }
+           if (notDegeri !== '') { window.gtag('event', 'not_dagilimi', { 'event_category': 'Not_Istatistikleri', 'event_label': `${sinavAdi} | Puan: ${notDegeri}` }); }
          };
 
          reportGrade('QUIZ 1', grades.quiz[0]); reportGrade('QUIZ 2', grades.quiz[1]); reportGrade('QUIZ 3', grades.quiz[2]); reportGrade('QUIZ 4', grades.quiz[3]);
@@ -211,7 +207,6 @@ export default function App() {
          reportGrade('KANAAT 1', grades.kanaat[0]); reportGrade('KANAAT 2', grades.kanaat[1]);
          reportGrade('ODEV 1', grades.odev[0]); reportGrade('ODEV 2', grades.odev[1]);
          reportGrade('FINAL', grades.final); reportGrade('BUTUNLEME', grades.butunleme);
-
        }, 2000);
     }
   };
@@ -230,14 +225,10 @@ export default function App() {
     if (targetNote && targetNote.text) text += `• ${targetNote.text}\n`;
     if (typeof window !== 'undefined') text += `\n${t.waLink}\n${window.location.href}`;
     
-    // MANTIKSAL ZIRH: Önce Sinyali Gönder, Sonra Sekmeyi Aç (WhatsApp Körlüğü Giderildi)
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'whatsapp_paylasimi', { 'event_category': 'Sosyal', 'event_label': `Kur: ${selectedCourse} | Ort: ${results.ortalama}` });
     }
-    
-    setTimeout(() => {
-      Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
-    }, 150);
+    setTimeout(() => { Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`); }, 150);
   };
 
   const handleSendFeedback = () => {
@@ -281,18 +272,31 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
+          
+          {/* MANTIKSAL ZIRH: Sol Üst Global Dil Değiştirici (Bayrak) */}
+          <TouchableOpacity 
+            onPress={() => handleLanguageChange(language === 'tr' ? 'en' : 'tr')} 
+            style={[
+              styles.langBox, 
+              { 
+                backgroundColor: theme.card, 
+                borderColor: theme.border,
+                position: 'absolute', 
+                left: 0, 
+                top: isMobile ? -20 : 0,
+                zIndex: 10
+              }
+            ]}
+          >
+            <Text style={{ fontSize: 22, textAlign: 'center' }}>{language === 'tr' ? '🇺🇸' : '🇹🇷'}</Text>
+          </TouchableOpacity>
+
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>{t.sysTitle}</Text>
             <Text style={[styles.subtitle, { color: theme.accent }]}>{t.sysSub}</Text>
           </View>
           
           <View style={[styles.controlsSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0 }]}>
-            {/* Dil Seçici Motoru */}
-            <TouchableOpacity onPress={() => handleLanguageChange(language === 'tr' ? 'en' : 'tr')} style={[styles.langBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.langText, { color: theme.text }]}>{language === 'tr' ? 'EN' : 'TR'}</Text>
-            </TouchableOpacity>
-
-            {/* Tema Seçici Motoru */}
             {Object.values(THEMES).map(themeObj => (
               <TouchableOpacity key={themeObj.id} onPress={() => handleThemeChange(themeObj.id)} style={[styles.themeBox, { backgroundColor: themeObj.card, borderColor: activeTheme === themeObj.id ? themeObj.accent : themeObj.border }]}>
                 <Text style={styles.themeIcon}>{themeObj.icon}</Text>
@@ -314,9 +318,9 @@ export default function App() {
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>{t.term1}</Text>
-          <View style={styles.simetricRow}>{renderInput('QUIZ 1', 'quiz', 0)}<View style={styles.gap16}/>{renderInput('VİZE 1', 'vize', 0)}</View>
+          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 1`, 'quiz', 0)}<View style={styles.gap16}/>{renderInput(`${t.vize} 1`, 'vize', 0)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput('QUIZ 2', 'quiz', 1)}<View style={styles.gap16}/>{renderInput('VİZE 2', 'vize', 1)}</View>
+          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 2`, 'quiz', 1)}<View style={styles.gap16}/>{renderInput(`${t.vize} 2`, 'vize', 1)}</View>
           <View style={{height: 16}}/>
           <View style={styles.simetricRow}>{renderInput(`${t.writing} 1`, 'writing', 0)}<View style={styles.gap16}/>{renderInput(`${t.sunum} 1`, 'sunum', 0)}</View>
           <View style={{height: 16}}/>
@@ -325,9 +329,9 @@ export default function App() {
 
         <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.label, { color: theme.accent }]}>{t.term2}</Text>
-          <View style={styles.simetricRow}>{renderInput('QUIZ 3', 'quiz', 2)}<View style={styles.gap16}/>{renderInput('VİZE 3', 'vize', 2)}</View>
+          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 3`, 'quiz', 2)}<View style={styles.gap16}/>{renderInput(`${t.vize} 3`, 'vize', 2)}</View>
           <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput('QUIZ 4', 'quiz', 3)}<View style={styles.gap16}/>{renderInput('VİZE 4', 'vize', 3)}</View>
+          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 4`, 'quiz', 3)}<View style={styles.gap16}/>{renderInput(`${t.vize} 4`, 'vize', 3)}</View>
           <View style={{height: 16}}/>
           <View style={styles.simetricRow}>{renderInput(`${t.writing} 2`, 'writing', 1)}<View style={styles.gap16}/>{renderInput(`${t.sunum} 2`, 'sunum', 1)}</View>
           <View style={{height: 16}}/>
@@ -383,14 +387,13 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1 }, 
   scroll: { padding: 16 },
-  headerRowMobile: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
+  headerRowMobile: { alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative' },
   headerRowDesktop: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative' },
   titleContainer: { alignItems: 'center' },
   title: { fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
   controlsSelector: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   langBox: { width: 44, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
-  langText: { fontSize: 13, fontWeight: '800' },
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeIcon: { fontSize: 16 },
   section: { borderRadius: 16, padding: 18, marginBottom: 24, borderWidth: 1 },
