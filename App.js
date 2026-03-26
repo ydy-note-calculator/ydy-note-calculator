@@ -12,7 +12,6 @@ const THEMES = {
   hacker: { id: 'hacker', icon: '💻', bg: '#000000', card: '#052e16', text: '#4ade80', textSecondary: '#22c55e', border: '#166534', accent: '#a855f7' }
 };
 
-// MANTIKSAL ZIRH: Kusursuz Çeviri Sözlüğü (Akademik Literatür)
 const TRANSLATIONS = {
   tr: {
     sysTitle: 'YDY', sysSub: 'Not Hesaplama Sistemi',
@@ -269,6 +268,11 @@ export default function App() {
     );
   };
 
+  // MANTIKSAL ZIRH: İşletim Sistemi Tespiti (Windows vs Mobil)
+  const isWin = Platform.OS === 'web' && typeof window !== 'undefined' && /windows/i.test(window.navigator.userAgent.toLowerCase());
+  const trIcon = isWin ? 'TR' : '🇹🇷';
+  const enIcon = isWin ? 'EN' : '🇺🇸';
+
   if (!isLoaded) return null;
 
   return (
@@ -278,8 +282,8 @@ export default function App() {
         
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
           
-          {/* MANTIKSAL ZIRH: Yan Yana İki Bayraklı Dil Seçici (Sol Üst) */}
-          <View style={[styles.langContainer, { position: 'absolute', left: 0, top: isMobile ? -20 : 0, zIndex: 10 }]}>
+          {/* MANTIKSAL ZIRH: Z-Index Koruyuculu Dinamik Dil Motoru (Sol Üst) */}
+          <View style={[styles.langContainer, { position: 'absolute', left: 0, top: isMobile ? -20 : 0, zIndex: 9999, elevation: 10 }]}>
             <TouchableOpacity 
               onPress={() => handleLanguageChange('tr')} 
               style={[
@@ -290,7 +294,7 @@ export default function App() {
                 }
               ]}
             >
-              <Text style={{ fontSize: 22, textAlign: 'center' }}>🇹🇷</Text>
+              <Text style={{ fontSize: isWin ? 15 : 22, fontWeight: 'bold', color: language === 'tr' ? '#fff' : theme.text, textAlign: 'center' }}>{trIcon}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -304,7 +308,7 @@ export default function App() {
                 }
               ]}
             >
-              <Text style={{ fontSize: 22, textAlign: 'center' }}>🇺🇸</Text>
+              <Text style={{ fontSize: isWin ? 15 : 22, fontWeight: 'bold', color: language === 'en' ? '#fff' : theme.text, textAlign: 'center' }}>{enIcon}</Text>
             </TouchableOpacity>
           </View>
 
@@ -313,7 +317,7 @@ export default function App() {
             <Text style={[styles.subtitle, { color: theme.accent }]}>{t.sysSub}</Text>
           </View>
           
-          <View style={[styles.controlsSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0 }]}>
+          <View style={[styles.controlsSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0, zIndex: 9999, elevation: 10 }]}>
             {Object.values(THEMES).map(themeObj => (
               <TouchableOpacity key={themeObj.id} onPress={() => handleThemeChange(themeObj.id)} style={[styles.themeBox, { backgroundColor: themeObj.card, borderColor: activeTheme === themeObj.id ? themeObj.accent : themeObj.border }]}>
                 <Text style={styles.themeIcon}>{themeObj.icon}</Text>
@@ -404,8 +408,8 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1 }, 
   scroll: { padding: 16 },
-  headerRowMobile: { alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative' },
-  headerRowDesktop: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative' },
+  headerRowMobile: { alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative', zIndex: 1 },
+  headerRowDesktop: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 40, marginBottom: 40, position: 'relative', zIndex: 1 },
   titleContainer: { alignItems: 'center' },
   title: { fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
