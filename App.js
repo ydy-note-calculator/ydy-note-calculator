@@ -97,6 +97,10 @@ export default function App() {
         const favicon = document.createElement('link'); favicon.type = 'image/png'; favicon.rel = 'shortcut icon'; favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png';
         document.getElementsByTagName('head')[0].appendChild(favicon);
       }
+      if (!document.querySelector("meta[name='description']")) {
+        const metaDesc = document.createElement('meta'); metaDesc.name = "description"; metaDesc.content = language === 'tr' ? "Üniversite öğrencileri için YDY Not Hesaplama Sistemi." : "SFL Grade Calculator for University Students."; document.head.appendChild(metaDesc);
+        const metaKeywords = document.createElement('meta'); metaKeywords.name = "keywords"; metaKeywords.content = language === 'tr' ? "ydy not hesaplama, hazırlık atlama, vize final hesaplama" : "sfl grade calculator, proficiency exam, midterm final calculation"; document.head.appendChild(metaKeywords);
+      }
     }
   };
 
@@ -150,7 +154,8 @@ export default function App() {
   const handleCourseSelection = (course) => {
     setSelectedCourse(course);
     if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', 'kur_secildi', { 'event_category': 'Etkilesim', 'event_label': `${course} Kuru` }); }
-  };const calculateGrade = () => {
+  };
+  const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
     const vP = (grades.vize.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 60;
     const wP = ((parseFloat(grades.writing[0]) || 0) * 0.025) + ((parseFloat(grades.writing[1]) || 0) * 0.025);
@@ -273,23 +278,35 @@ export default function App() {
         
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
           
-          {/* MANTIKSAL ZIRH: Sol Üst Global Dil Değiştirici (Bayrak) */}
-          <TouchableOpacity 
-            onPress={() => handleLanguageChange(language === 'tr' ? 'en' : 'tr')} 
-            style={[
-              styles.langBox, 
-              { 
-                backgroundColor: theme.card, 
-                borderColor: theme.border,
-                position: 'absolute', 
-                left: 0, 
-                top: isMobile ? -20 : 0,
-                zIndex: 10
-              }
-            ]}
-          >
-            <Text style={{ fontSize: 22, textAlign: 'center' }}>{language === 'tr' ? '🇺🇸' : '🇹🇷'}</Text>
-          </TouchableOpacity>
+          {/* MANTIKSAL ZIRH: Yan Yana İki Bayraklı Dil Seçici (Sol Üst) */}
+          <View style={[styles.langContainer, { position: 'absolute', left: 0, top: isMobile ? -20 : 0, zIndex: 10 }]}>
+            <TouchableOpacity 
+              onPress={() => handleLanguageChange('tr')} 
+              style={[
+                styles.langBox, 
+                { 
+                  backgroundColor: language === 'tr' ? theme.accent : theme.card, 
+                  borderColor: language === 'tr' ? theme.accent : theme.border 
+                }
+              ]}
+            >
+              <Text style={{ fontSize: 22, textAlign: 'center' }}>🇹🇷</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={() => handleLanguageChange('en')} 
+              style={[
+                styles.langBox, 
+                { 
+                  backgroundColor: language === 'en' ? theme.accent : theme.card, 
+                  borderColor: language === 'en' ? theme.accent : theme.border,
+                  marginLeft: 8 
+                }
+              ]}
+            >
+              <Text style={{ fontSize: 22, textAlign: 'center' }}>🇺🇸</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>{t.sysTitle}</Text>
@@ -392,6 +409,7 @@ const styles = StyleSheet.create({
   titleContainer: { alignItems: 'center' },
   title: { fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
   subtitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  langContainer: { flexDirection: 'row' },
   controlsSelector: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   langBox: { width: 44, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   themeBox: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
