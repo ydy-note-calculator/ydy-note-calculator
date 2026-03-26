@@ -71,12 +71,17 @@ export default function App() {
   const theme = THEMES[activeTheme] || THEMES.hacker;
   const t = TRANSLATIONS[language];
 
+  // 1. Mutlak Kural: Veriler sadece sayfa ilk açıldığında YALNIZCA BİR KEZ yüklenir.
+  useEffect(() => {
+    if (Platform.OS === 'web') setupWebEnvironment();
+    loadSavedData();
+  }, []);
+
+  // 2. Dinamik Kural: Sekme başlığı, sadece dil değiştiğinde güncellenir (Hafızaya dokunulmaz).
   useEffect(() => {
     if (Platform.OS === 'web') {
       document.title = language === 'tr' ? "YDY Not Hesaplama Sistemi" : "SFL Grade Calculator";
-      setupWebEnvironment();
     }
-    loadSavedData();
   }, [language]);
 
   const setupWebEnvironment = () => {
