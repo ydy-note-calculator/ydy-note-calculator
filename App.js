@@ -12,6 +12,7 @@ const THEMES = {
   hacker: { id: 'hacker', icon: '💻', bg: '#000000', card: '#052e16', text: '#4ade80', textSecondary: '#22c55e', border: '#166534', accent: '#a855f7' }
 };
 
+// MANTIKSAL ZIRH 1: Kusursuz Çeviri Sözlüğü
 const TRANSLATIONS = {
   tr: {
     sysTitle: 'YDY', sysSub: 'Not Hesaplama Sistemi',
@@ -71,13 +72,12 @@ export default function App() {
   const theme = THEMES[activeTheme] || THEMES.hacker;
   const t = TRANSLATIONS[language];
 
-  // 1. Mutlak Kural: Veriler sadece sayfa ilk açıldığında YALNIZCA BİR KEZ yüklenir.
+  // MANTIKSAL ZIRH 2: Hafıza Çakışmasını Engelleyen Ayrıştırılmış Başlatma
   useEffect(() => {
     if (Platform.OS === 'web') setupWebEnvironment();
     loadSavedData();
   }, []);
 
-  // 2. Dinamik Kural: Sekme başlığı, sadece dil değiştiğinde güncellenir (Hafızaya dokunulmaz).
   useEffect(() => {
     if (Platform.OS === 'web') {
       document.title = language === 'tr' ? "YDY Not Hesaplama Sistemi" : "SFL Grade Calculator";
@@ -102,8 +102,8 @@ export default function App() {
         document.getElementsByTagName('head')[0].appendChild(favicon);
       }
       if (!document.querySelector("meta[name='description']")) {
-        const metaDesc = document.createElement('meta'); metaDesc.name = "description"; metaDesc.content = language === 'tr' ? "Üniversite öğrencileri için YDY Not Hesaplama Sistemi." : "SFL Grade Calculator for University Students."; document.head.appendChild(metaDesc);
-        const metaKeywords = document.createElement('meta'); metaKeywords.name = "keywords"; metaKeywords.content = language === 'tr' ? "ydy not hesaplama, hazırlık atlama, vize final hesaplama" : "sfl grade calculator, proficiency exam, midterm final calculation"; document.head.appendChild(metaKeywords);
+        const metaDesc = document.createElement('meta'); metaDesc.name = "description"; metaDesc.content = "YDY Not Hesaplama Sistemi / SFL Grade Calculator"; document.head.appendChild(metaDesc);
+        const metaKeywords = document.createElement('meta'); metaKeywords.name = "keywords"; metaKeywords.content = "ydy not hesaplama, sfl grade calculator, hazırlık atlama"; document.head.appendChild(metaKeywords);
       }
     }
   };
@@ -159,6 +159,7 @@ export default function App() {
     setSelectedCourse(course);
     if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', 'kur_secildi', { 'event_category': 'Etkilesim', 'event_label': `${course} Kuru` }); }
   };
+
   const calculateGrade = () => {
     const qP = (grades.quiz.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 20;
     const vP = (grades.vize.map(v => parseFloat(v) || 0).reduce((a, b) => a + b, 0) / 4 / 100) * 60;
@@ -197,26 +198,14 @@ export default function App() {
     }
     setResults(res);
 
+    // MANTIKSAL ZIRH 3: 3.5 Saniyelik Susturucu (Spam Şarapneli Yok Edildi)
     if (ort > 0 && typeof window !== 'undefined' && window.gtag) {
        if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
        gaReportingTimer.current = setTimeout(() => {
-         const detayText = `Q:[${grades.quiz[0]||'-'},${grades.quiz[1]||'-'}|${grades.quiz[2]||'-'},${grades.quiz[3]||'-'}] V:[${grades.vize[0]||'-'},${grades.vize[1]||'-'}|${grades.vize[2]||'-'},${grades.vize[3]||'-'}] W:[${grades.writing[0]||'-'}|${grades.writing[1]||'-'}] S:[${grades.sunum[0]||'-'}|${grades.sunum[1]||'-'}] K:[${grades.kanaat[0]||'-'}|${grades.kanaat[1]||'-'}] O:[${grades.odev[0]||'-'}|${grades.odev[1]||'-'}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
-         
-         window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)} | Durum: ${res.durum}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
+         const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
+         window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
          if (localTargetText) window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
-
-         const reportGrade = (sinavAdi, notDegeri) => {
-           if (notDegeri !== '') { window.gtag('event', 'not_dagilimi', { 'event_category': 'Not_Istatistikleri', 'event_label': `${sinavAdi} | Puan: ${notDegeri}` }); }
-         };
-
-         reportGrade('QUIZ 1', grades.quiz[0]); reportGrade('QUIZ 2', grades.quiz[1]); reportGrade('QUIZ 3', grades.quiz[2]); reportGrade('QUIZ 4', grades.quiz[3]);
-         reportGrade('VIZE 1', grades.vize[0]); reportGrade('VIZE 2', grades.vize[1]); reportGrade('VIZE 3', grades.vize[2]); reportGrade('VIZE 4', grades.vize[3]);
-         reportGrade('WRITING 1', grades.writing[0]); reportGrade('WRITING 2', grades.writing[1]);
-         reportGrade('SUNUM 1', grades.sunum[0]); reportGrade('SUNUM 2', grades.sunum[1]);
-         reportGrade('KANAAT 1', grades.kanaat[0]); reportGrade('KANAAT 2', grades.kanaat[1]);
-         reportGrade('ODEV 1', grades.odev[0]); reportGrade('ODEV 2', grades.odev[1]);
-         reportGrade('FINAL', grades.final); reportGrade('BUTUNLEME', grades.butunleme);
-       }, 2000);
+       }, 3500); 
     }
   };
 
@@ -273,7 +262,7 @@ export default function App() {
     );
   };
 
-  // MANTIKSAL ZIRH: İşletim Sistemi Tespiti (Windows vs Mobil)
+  // MANTIKSAL ZIRH 4: İşletim Sistemi Ajanı
   const isWin = Platform.OS === 'web' && typeof window !== 'undefined' && /windows/i.test(window.navigator.userAgent.toLowerCase());
   const trIcon = isWin ? 'TR' : '🇹🇷';
   const enIcon = isWin ? 'EN' : '🇺🇸';
@@ -287,31 +276,17 @@ export default function App() {
         
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
           
-          {/* MANTIKSAL ZIRH: Z-Index Koruyuculu Dinamik Dil Motoru (Sol Üst) */}
+          {/* MANTIKSAL ZIRH 5: Z-Index Koruyuculu Sol Üst Bayraklar */}
           <View style={[styles.langContainer, { position: 'absolute', left: 0, top: isMobile ? -20 : 0, zIndex: 9999, elevation: 10 }]}>
             <TouchableOpacity 
               onPress={() => handleLanguageChange('tr')} 
-              style={[
-                styles.langBox, 
-                { 
-                  backgroundColor: language === 'tr' ? theme.accent : theme.card, 
-                  borderColor: language === 'tr' ? theme.accent : theme.border 
-                }
-              ]}
+              style={[styles.langBox, { backgroundColor: language === 'tr' ? theme.accent : theme.card, borderColor: language === 'tr' ? theme.accent : theme.border }]}
             >
               <Text style={{ fontSize: isWin ? 15 : 22, fontWeight: 'bold', color: language === 'tr' ? '#fff' : theme.text, textAlign: 'center' }}>{trIcon}</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity 
               onPress={() => handleLanguageChange('en')} 
-              style={[
-                styles.langBox, 
-                { 
-                  backgroundColor: language === 'en' ? theme.accent : theme.card, 
-                  borderColor: language === 'en' ? theme.accent : theme.border,
-                  marginLeft: 8 
-                }
-              ]}
+              style={[styles.langBox, { backgroundColor: language === 'en' ? theme.accent : theme.card, borderColor: language === 'en' ? theme.accent : theme.border, marginLeft: 8 }]}
             >
               <Text style={{ fontSize: isWin ? 15 : 22, fontWeight: 'bold', color: language === 'en' ? '#fff' : theme.text, textAlign: 'center' }}>{enIcon}</Text>
             </TouchableOpacity>
@@ -322,6 +297,7 @@ export default function App() {
             <Text style={[styles.subtitle, { color: theme.accent }]}>{t.sysSub}</Text>
           </View>
           
+          {/* Tema Seçici Sağ Üstte Z-Index Korumalı */}
           <View style={[styles.controlsSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0, zIndex: 9999, elevation: 10 }]}>
             {Object.values(THEMES).map(themeObj => (
               <TouchableOpacity key={themeObj.id} onPress={() => handleThemeChange(themeObj.id)} style={[styles.themeBox, { backgroundColor: themeObj.card, borderColor: activeTheme === themeObj.id ? themeObj.accent : themeObj.border }]}>
