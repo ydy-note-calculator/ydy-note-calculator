@@ -30,7 +30,8 @@ const TRANSLATIONS = {
     feedbackTitle: 'ÖNERİ VE GERİ BİLDİRİM', nameLabel: 'AD SOYAD', namePlace: 'ADINIZI GİRİNİZ',
     msgPlace: 'ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ (Max 100 Karakter)...',
     sendBtn: 'MESAJI GÖNDER', successMsg: 'Mesajınız başarıyla iletildi!',
-    waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:'
+    waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:',
+    levelSuffix: 'KURU'
   },
   en: {
     sysTitle: 'SFL', sysSub: 'Grade Calculator',
@@ -45,7 +46,8 @@ const TRANSLATIONS = {
     feedbackTitle: 'FEEDBACK & SUGGESTIONS', nameLabel: 'FULL NAME', namePlace: 'ENTER YOUR NAME',
     msgPlace: 'WRITE YOUR SUGGESTIONS OR COMPLAINTS HERE (Max 100 Chars)...',
     sendBtn: 'SEND MESSAGE', successMsg: 'Message sent successfully!',
-    waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:'
+    waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:',
+    levelSuffix: 'LEVEL'
   }
 };
 
@@ -177,7 +179,10 @@ export default function App() {
     const kP = ((parseFloat(grades.kanaat[0]) || 0) * 0.025) + ((parseFloat(grades.kanaat[1]) || 0) * 0.025);
     const oP = ((parseFloat(grades.odev[0]) || 0) * 0.025) + ((parseFloat(grades.odev[1]) || 0) * 0.025);
     
-    const ort = qP + vP + wP + sP + kP + oP;
+    // MANTIKSAL ZIRH: Floating Point Precision (Kayan Nokta Yanılsaması Giderildi)
+    const rawOrt = qP + vP + wP + sP + kP + oP;
+    const ort = parseFloat(rawOrt.toFixed(2));
+    
     const limit = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
     const needed = Math.ceil((65 - (ort * 0.4)) / 0.6);
     let res = { ortalama: ort.toFixed(2), durum: '', renk: '', fH: null, bH: null };
@@ -212,15 +217,20 @@ export default function App() {
        if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
        
        gaReportingTimer.current = setTimeout(() => {
-         // 1. Ana Paket (Ockham'ın Usturası)
          const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
          window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
          if (localTargetText) window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
          
-         // 2. Mikro-Gecikmeli Bireysel Sinyaller (GA4 25 Sınırı Kalkanı)
          gaIndividualTimer.current = setTimeout(() => {
+           // MANTIKSAL ZIRH: Kardinalite Bombası Engellendi (Akıllı Değer Ataması)
            const fireGrade = (examName, val) => {
-             if (val !== '') window.gtag('event', 'bireysel_not', { 'event_category': 'Not_Analizi', 'event_label': `${selectedCourse} Kuru | ${examName}: ${val}` });
+             if (val !== '') {
+               window.gtag('event', 'bireysel_not', { 
+                 'event_category': `${selectedCourse} Kuru`, 
+                 'event_label': examName, 
+                 'value': parseFloat(val) 
+               });
+             }
            };
            fireGrade('Quiz 1', grades.quiz[0]); fireGrade('Quiz 2', grades.quiz[1]); fireGrade('Quiz 3', grades.quiz[2]); fireGrade('Quiz 4', grades.quiz[3]);
            fireGrade('Vize 1', grades.vize[0]); fireGrade('Vize 2', grades.vize[1]); fireGrade('Vize 3', grades.vize[2]); fireGrade('Vize 4', grades.vize[3]);
@@ -274,7 +284,6 @@ export default function App() {
           value={val} 
           onChangeText={textVal => {
             const v = textVal === '' ? '' : textVal.replace(/[^0-9]/g, '');
-            // MANTIKSAL ZIRH: Ağ Spam Bombası (GA4) İptal Edildi. Yalnızca cihaz içinde reddedilir.
             if (v !== '' && parseInt(v) > 100) return; 
             if (Array.isArray(grades[field])) { 
               const n = [...grades[field]]; n[index] = v; setGrades({ ...grades, [field]: n }); 
@@ -329,9 +338,8 @@ export default function App() {
           <View style={styles.simetricRow}>
             {['A', 'B', 'C'].map((k, i) => (
               <TouchableOpacity key={k} onPress={() => handleCourseSelection(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
-                {/* MANTIKSAL ZIRH: Akademik İngilizce Gramer Asimetrisi Düzeltildi */}
                 <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>
-                  {language === 'tr' ? `${k} KURU` : `LEVEL ${k}`}
+                  {language === 'tr' ? `${k} ${t.levelSuffix}` : `${t.levelSuffix} ${k}`}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -372,7 +380,7 @@ export default function App() {
             <Text style={[styles.resN, { color: theme.text }]}>{t.average} {results.ortalama}</Text>
             {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
             <TouchableOpacity style={styles.resetBtn} onPress={handleReset}><Text style={styles.resetBtnT}>{t.reset}</Text></TouchableOpacity>
-            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>{t.share}</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>📲 {t.share}</Text></TouchableOpacity>
           </View>
         )}
 
