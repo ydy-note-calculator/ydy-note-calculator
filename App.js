@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Platform, Linking, useWindowDimensions } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, TextInput, StyleSheet, Platform, Linking, useWindowDimensions, KeyboardAvoidingView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -31,7 +31,9 @@ const TRANSLATIONS = {
     msgPlace: 'ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ (Max 100 Karakter)...',
     sendBtn: 'MESAJI GÖNDER', successMsg: 'Mesajınız başarıyla iletildi!',
     waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:',
-    levelSuffix: 'KURU'
+    levelSuffix: 'KURU',
+    metaDesc: 'YDY Not Hesaplama Sistemi. Üniversite hazırlık öğrencileri için vize, final ve bütünleme ortalama hesaplama aracı.',
+    metaKeys: 'ydy not hesaplama, hazırlık atlama, vize final hesaplama, ydy'
   },
   en: {
     sysTitle: 'SFL', sysSub: 'Grade Calculator',
@@ -47,7 +49,9 @@ const TRANSLATIONS = {
     msgPlace: 'WRITE YOUR SUGGESTIONS OR COMPLAINTS HERE (Max 100 Chars)...',
     sendBtn: 'SEND MESSAGE', successMsg: 'Message sent successfully!',
     waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:',
-    levelSuffix: 'LEVEL'
+    levelSuffix: 'LEVEL',
+    metaDesc: 'SFL Grade Calculator. Midterm, final and make-up average calculation tool for university prep students.',
+    metaKeys: 'sfl grade calculator, proficiency exam, midterm final calculation'
   }
 };
 
@@ -92,9 +96,26 @@ export default function App() {
     loadSavedData();
   }, []);
 
+  // MANTIKSAL ZIRH: Dinamik SEO Motoru (Dil değiştiğinde Meta Etiketler de değişir)
   useEffect(() => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.title = language === 'tr' ? "YDY Not Hesaplama Sistemi" : "SFL Grade Calculator";
+      
+      let metaDesc = document.querySelector("meta[name='description']");
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.name = "description";
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.content = t.metaDesc;
+
+      let metaKeys = document.querySelector("meta[name='keywords']");
+      if (!metaKeys) {
+        metaKeys = document.createElement('meta');
+        metaKeys.name = "keywords";
+        document.head.appendChild(metaKeys);
+      }
+      metaKeys.content = t.metaKeys;
     }
   }, [language]);
 
@@ -312,119 +333,122 @@ export default function App() {
   if (!isLoaded) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
-      <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        
-        <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.bg }]}>
+        <StatusBar style={activeTheme === 'light' ? "dark" : "light"} />
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           
-          <View style={[styles.langContainer, { position: 'absolute', left: 0, top: 0, zIndex: 9999, elevation: 10 }]}>
-            <TouchableOpacity 
-              onPress={() => handleLanguageChange('tr')} 
-              style={[styles.langBox, { backgroundColor: language === 'tr' ? theme.accent : theme.card, borderColor: language === 'tr' ? theme.accent : theme.border }]}
-            >
-              <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'tr' ? '#fff' : theme.text, textAlign: 'center' }}>{TR_ICON}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={() => handleLanguageChange('en')} 
-              style={[styles.langBox, { backgroundColor: language === 'en' ? theme.accent : theme.card, borderColor: language === 'en' ? theme.accent : theme.border, marginLeft: 8 }]}
-            >
-              <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'en' ? '#fff' : theme.text, textAlign: 'center' }}>{EN_ICON}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>{t.sysTitle}</Text>
-            <Text style={[styles.subtitle, { color: theme.accent }]}>{t.sysSub}</Text>
-          </View>
-          
-          <View style={[styles.controlsSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0, zIndex: 9999, elevation: 10 }]}>
-            {Object.values(THEMES).map(themeObj => (
-              <TouchableOpacity key={themeObj.id} onPress={() => handleThemeChange(themeObj.id)} style={[styles.themeBox, { backgroundColor: themeObj.card, borderColor: activeTheme === themeObj.id ? themeObj.accent : themeObj.border }]}>
-                <Text style={styles.themeIcon}>{themeObj.icon}</Text>
+          <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
+            
+            <View style={[styles.langContainer, { position: 'absolute', left: 0, top: 0, zIndex: 9999, elevation: 10 }]}>
+              <TouchableOpacity 
+                onPress={() => handleLanguageChange('tr')} 
+                style={[styles.langBox, { backgroundColor: language === 'tr' ? theme.accent : theme.card, borderColor: language === 'tr' ? theme.accent : theme.border }]}
+              >
+                <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'tr' ? '#fff' : theme.text, textAlign: 'center' }}>{TR_ICON}</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+              <TouchableOpacity 
+                onPress={() => handleLanguageChange('en')} 
+                style={[styles.langBox, { backgroundColor: language === 'en' ? theme.accent : theme.card, borderColor: language === 'en' ? theme.accent : theme.border, marginLeft: 8 }]}
+              >
+                <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'en' ? '#fff' : theme.text, textAlign: 'center' }}>{EN_ICON}</Text>
+              </TouchableOpacity>
+            </View>
 
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>{t.levelSelect}</Text>
+            <View style={styles.titleContainer}>
+              <Text style={[styles.title, { color: theme.text, fontSize: isMobile ? 40 : 48 }]}>{t.sysTitle}</Text>
+              <Text style={[styles.subtitle, { color: theme.accent }]}>{t.sysSub}</Text>
+            </View>
+            
+            <View style={[styles.controlsSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0, zIndex: 9999, elevation: 10 }]}>
+              {Object.values(THEMES).map(themeObj => (
+                <TouchableOpacity key={themeObj.id} onPress={() => handleThemeChange(themeObj.id)} style={[styles.themeBox, { backgroundColor: themeObj.card, borderColor: activeTheme === themeObj.id ? themeObj.accent : themeObj.border }]}>
+                  <Text style={styles.themeIcon}>{themeObj.icon}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.label, { color: theme.accent }]}>{t.levelSelect}</Text>
+            <View style={styles.simetricRow}>
+              {['A', 'B', 'C'].map((k, i) => (
+                <TouchableOpacity key={k} onPress={() => handleCourseSelection(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
+                  <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>
+                    {language === 'tr' ? `${k} ${t.levelSuffix}` : `${t.levelSuffix} ${k}`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.label, { color: theme.accent }]}>{t.term1}</Text>
+            <View style={styles.simetricRow}>{renderInput(`${t.quiz} 1`, 'quiz', 0)}<View style={styles.gap16}/>{renderInput(`${t.vize} 1`, 'vize', 0)}</View>
+            <View style={{height: 16}}/>
+            <View style={styles.simetricRow}>{renderInput(`${t.quiz} 2`, 'quiz', 1)}<View style={styles.gap16}/>{renderInput(`${t.vize} 2`, 'vize', 1)}</View>
+            <View style={{height: 16}}/>
+            <View style={styles.simetricRow}>{renderInput(`${t.writing} 1`, 'writing', 0)}<View style={styles.gap16}/>{renderInput(`${t.sunum} 1`, 'sunum', 0)}</View>
+            <View style={{height: 16}}/>
+            <View style={styles.simetricRow}>{renderInput(`${t.kanaat} 1`, 'kanaat', 0)}<View style={styles.gap16}/>{renderInput(`${t.odev} 1`, 'odev', 0)}</View>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.label, { color: theme.accent }]}>{t.term2}</Text>
+            <View style={styles.simetricRow}>{renderInput(`${t.quiz} 3`, 'quiz', 2)}<View style={styles.gap16}/>{renderInput(`${t.vize} 3`, 'vize', 2)}</View>
+            <View style={{height: 16}}/>
+            <View style={styles.simetricRow}>{renderInput(`${t.quiz} 4`, 'quiz', 3)}<View style={styles.gap16}/>{renderInput(`${t.vize} 4`, 'vize', 3)}</View>
+            <View style={{height: 16}}/>
+            <View style={styles.simetricRow}>{renderInput(`${t.writing} 2`, 'writing', 1)}<View style={styles.gap16}/>{renderInput(`${t.sunum} 2`, 'sunum', 1)}</View>
+            <View style={{height: 16}}/>
+            <View style={styles.simetricRow}>{renderInput(`${t.kanaat} 2`, 'kanaat', 1)}<View style={styles.gap16}/>{renderInput(`${t.odev} 2`, 'odev', 1)}</View>
+          </View>
+          
           <View style={styles.simetricRow}>
-            {['A', 'B', 'C'].map((k, i) => (
-              <TouchableOpacity key={k} onPress={() => handleCourseSelection(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
-                <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>
-                  {language === 'tr' ? `${k} ${t.levelSuffix}` : `${t.levelSuffix} ${k}`}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput(t.final, 'final')}</View>
+            <View style={styles.gap16} />
+            <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput(t.butunleme, 'butunleme')}</View>
           </View>
-        </View>
 
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>{t.term1}</Text>
-          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 1`, 'quiz', 0)}<View style={styles.gap16}/>{renderInput(`${t.vize} 1`, 'vize', 0)}</View>
-          <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 2`, 'quiz', 1)}<View style={styles.gap16}/>{renderInput(`${t.vize} 2`, 'vize', 1)}</View>
-          <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput(`${t.writing} 1`, 'writing', 0)}<View style={styles.gap16}/>{renderInput(`${t.sunum} 1`, 'sunum', 0)}</View>
-          <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput(`${t.kanaat} 1`, 'kanaat', 0)}<View style={styles.gap16}/>{renderInput(`${t.odev} 1`, 'odev', 0)}</View>
-        </View>
+          {results && (
+            <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
+              <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
+              <Text style={[styles.resN, { color: theme.text }]}>{t.average} {results.ortalama}</Text>
+              {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
+              <TouchableOpacity style={styles.resetBtn} onPress={handleReset}><Text style={styles.resetBtnT}>{t.reset}</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>📲 {t.share}</Text></TouchableOpacity>
+            </View>
+          )}
 
-        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>{t.term2}</Text>
-          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 3`, 'quiz', 2)}<View style={styles.gap16}/>{renderInput(`${t.vize} 3`, 'vize', 2)}</View>
-          <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput(`${t.quiz} 4`, 'quiz', 3)}<View style={styles.gap16}/>{renderInput(`${t.vize} 4`, 'vize', 3)}</View>
-          <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput(`${t.writing} 2`, 'writing', 1)}<View style={styles.gap16}/>{renderInput(`${t.sunum} 2`, 'sunum', 1)}</View>
-          <View style={{height: 16}}/>
-          <View style={styles.simetricRow}>{renderInput(`${t.kanaat} 2`, 'kanaat', 1)}<View style={styles.gap16}/>{renderInput(`${t.odev} 2`, 'odev', 1)}</View>
-        </View>
-        
-        <View style={styles.simetricRow}>
-          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput(t.final, 'final')}</View>
-          <View style={styles.gap16} />
-          <View style={[styles.section, styles.flexItem, { backgroundColor: theme.card, borderColor: theme.border }]}>{renderInput(t.butunleme, 'butunleme')}</View>
-        </View>
-
-        {results && (
-          <View style={[styles.res, { borderTopColor: results.renk, backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
-            <Text style={[styles.resSt, { color: results.renk }]}>{results.durum}</Text>
-            <Text style={[styles.resN, { color: theme.text }]}>{t.average} {results.ortalama}</Text>
-            {targetNote && <Text style={[styles.targetT, { color: targetNote.type === 'fail' ? '#ef4444' : theme.accent }]}>{targetNote.text}</Text>}
-            <TouchableOpacity style={styles.resetBtn} onPress={handleReset}><Text style={styles.resetBtnT}>{t.reset}</Text></TouchableOpacity>
-            <TouchableOpacity style={styles.waBtn} onPress={shareOnWhatsApp}><Text style={styles.waBtnT}>📲 {t.share}</Text></TouchableOpacity>
+          <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.label, { color: theme.accent }]}>{t.feedbackTitle}</Text>
+            <Text style={[styles.iL, { color: theme.text }]}>{t.nameLabel}</Text>
+            <TextInput 
+              style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} 
+              value={studentName} 
+              onChangeText={setStudentName} 
+              placeholder={t.namePlace} 
+              placeholderTextColor={theme.textSecondary} 
+              maxLength={35} // MANTIKSAL ZIRH: GA4 Truncation Kalkanı
+            />
+            <TextInput 
+              style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
+              placeholder={t.msgPlace} 
+              placeholderTextColor={theme.textSecondary} 
+              value={feedbackText} 
+              onChangeText={setFeedbackText} 
+              maxLength={100} 
+              multiline={true} 
+            />
+            <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
+              <Text style={styles.fSendBtnT}>{t.sendBtn}</Text>
+            </TouchableOpacity>
           </View>
-        )}
-
-        <View style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.label, { color: theme.accent }]}>{t.feedbackTitle}</Text>
-          <Text style={[styles.iL, { color: theme.text }]}>{t.nameLabel}</Text>
-          <TextInput 
-            style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} 
-            value={studentName} 
-            onChangeText={setStudentName} 
-            placeholder={t.namePlace} 
-            placeholderTextColor={theme.textSecondary} 
-          />
-          <TextInput 
-            style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-            placeholder={t.msgPlace} 
-            placeholderTextColor={theme.textSecondary} 
-            value={feedbackText} 
-            onChangeText={setFeedbackText} 
-            maxLength={100} 
-            multiline={true} 
-          />
-          <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
-            <Text style={styles.fSendBtnT}>{t.sendBtn}</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
-      </ScrollView>
-    </View>
+          
+          <Text style={styles.footerBrand}>Created by Alparslan Soyak</Text>
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
