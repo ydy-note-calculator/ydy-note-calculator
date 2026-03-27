@@ -30,8 +30,7 @@ const TRANSLATIONS = {
     feedbackTitle: 'ÖNERİ VE GERİ BİLDİRİM', nameLabel: 'AD SOYAD', namePlace: 'ADINIZI GİRİNİZ',
     msgPlace: 'ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ (Max 100 Karakter)...',
     sendBtn: 'MESAJI GÖNDER', successMsg: 'Mesajınız başarıyla iletildi!',
-    waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:',
-    levelSuffix: 'KURU'
+    waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:'
   },
   en: {
     sysTitle: 'SFL', sysSub: 'Grade Calculator',
@@ -46,8 +45,7 @@ const TRANSLATIONS = {
     feedbackTitle: 'FEEDBACK & SUGGESTIONS', nameLabel: 'FULL NAME', namePlace: 'ENTER YOUR NAME',
     msgPlace: 'WRITE YOUR SUGGESTIONS OR COMPLAINTS HERE (Max 100 Chars)...',
     sendBtn: 'SEND MESSAGE', successMsg: 'Message sent successfully!',
-    waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:',
-    levelSuffix: 'LEVEL'
+    waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:'
   }
 };
 
@@ -73,6 +71,7 @@ export default function App() {
   const debounceCalcTimer = React.useRef(null);
   const debounceSaveTimer = React.useRef(null);
   const gaReportingTimer = React.useRef(null);
+  const gaIndividualTimer = React.useRef(null);
 
   const theme = THEMES[activeTheme] || THEMES.hacker;
   const t = TRANSLATIONS[language];
@@ -82,6 +81,7 @@ export default function App() {
       if (debounceCalcTimer.current) clearTimeout(debounceCalcTimer.current);
       if (debounceSaveTimer.current) clearTimeout(debounceSaveTimer.current);
       if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
+      if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
     };
   }, []);
 
@@ -207,35 +207,31 @@ export default function App() {
     }
     setResults(res);
 
-    // MANTIKSAL ZIRH: 24 Notun Nokta Atışı Raporlanması (Susturucu İçinde)
     if (ort > 0 && typeof window !== 'undefined' && window.gtag) {
        if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
+       if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
+       
        gaReportingTimer.current = setTimeout(() => {
-         
-         // 1. Genel Karne (Spam Korumalı)
+         // 1. Ana Paket (Ockham'ın Usturası)
          const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
          window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
          if (localTargetText) window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
+         
+         // 2. Mikro-Gecikmeli Bireysel Sinyaller (GA4 25 Sınırı Kalkanı)
+         gaIndividualTimer.current = setTimeout(() => {
+           const fireGrade = (examName, val) => {
+             if (val !== '') window.gtag('event', 'bireysel_not', { 'event_category': 'Not_Analizi', 'event_label': `${selectedCourse} Kuru | ${examName}: ${val}` });
+           };
+           fireGrade('Quiz 1', grades.quiz[0]); fireGrade('Quiz 2', grades.quiz[1]); fireGrade('Quiz 3', grades.quiz[2]); fireGrade('Quiz 4', grades.quiz[3]);
+           fireGrade('Vize 1', grades.vize[0]); fireGrade('Vize 2', grades.vize[1]); fireGrade('Vize 3', grades.vize[2]); fireGrade('Vize 4', grades.vize[3]);
+           fireGrade('Writing 1', grades.writing[0]); fireGrade('Writing 2', grades.writing[1]);
+           fireGrade('Sunum 1', grades.sunum[0]); fireGrade('Sunum 2', grades.sunum[1]);
+           fireGrade('Kanaat 1', grades.kanaat[0]); fireGrade('Kanaat 2', grades.kanaat[1]);
+           fireGrade('Odev 1', grades.odev[0]); fireGrade('Odev 2', grades.odev[1]);
+           fireGrade('Final', grades.final); fireGrade('Butunleme', grades.butunleme);
+         }, 50);
 
-         // 2. Bireysel Not Raporlaması (Sadece Dolu Kutular)
-         const fireGrade = (examName, val) => {
-           if (val !== '') {
-             window.gtag('event', 'bireysel_not', { 
-               'event_category': 'Not_Analizi', 
-               'event_label': `${selectedCourse} Kuru | ${examName}: ${val}` 
-             });
-           }
-         };
-
-         fireGrade('Quiz 1', grades.quiz[0]); fireGrade('Quiz 2', grades.quiz[1]); fireGrade('Quiz 3', grades.quiz[2]); fireGrade('Quiz 4', grades.quiz[3]);
-         fireGrade('Vize 1', grades.vize[0]); fireGrade('Vize 2', grades.vize[1]); fireGrade('Vize 3', grades.vize[2]); fireGrade('Vize 4', grades.vize[3]);
-         fireGrade('Writing 1', grades.writing[0]); fireGrade('Writing 2', grades.writing[1]);
-         fireGrade('Sunum 1', grades.sunum[0]); fireGrade('Sunum 2', grades.sunum[1]);
-         fireGrade('Kanaat 1', grades.kanaat[0]); fireGrade('Kanaat 2', grades.kanaat[1]);
-         fireGrade('Odev 1', grades.odev[0]); fireGrade('Odev 2', grades.odev[1]);
-         fireGrade('Final', grades.final); fireGrade('Butunleme', grades.butunleme);
-
-       }, 3500); // 3.5 Saniye kalkanı
+       }, 3500); 
     }
   };
 
@@ -253,7 +249,6 @@ export default function App() {
     if (targetNote && targetNote.text) text += `• ${targetNote.text}\n`;
     if (typeof window !== 'undefined') text += `\n${t.waLink}\n${window.location.href}`;
     
-    // MANTIKSAL ZIRH: Ölüm Vadisi Geciktiricisi (400ms)
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'whatsapp_paylasimi', { 'event_category': 'Sosyal', 'event_label': `Kur: ${selectedCourse} | Ort: ${results.ortalama}` });
     }
@@ -279,10 +274,8 @@ export default function App() {
           value={val} 
           onChangeText={textVal => {
             const v = textVal === '' ? '' : textVal.replace(/[^0-9]/g, '');
-            if (v !== '' && parseInt(v) > 100) {
-              if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', 'hatali_giris', { 'event_category': 'Hata', 'event_label': `Hatalı Not (>100): ${label}` }); }
-              return; 
-            }
+            // MANTIKSAL ZIRH: Ağ Spam Bombası (GA4) İptal Edildi. Yalnızca cihaz içinde reddedilir.
+            if (v !== '' && parseInt(v) > 100) return; 
             if (Array.isArray(grades[field])) { 
               const n = [...grades[field]]; n[index] = v; setGrades({ ...grades, [field]: n }); 
             } else { setGrades({ ...grades, [field]: v }); }
@@ -336,7 +329,10 @@ export default function App() {
           <View style={styles.simetricRow}>
             {['A', 'B', 'C'].map((k, i) => (
               <TouchableOpacity key={k} onPress={() => handleCourseSelection(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
-                <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>{k} {t.levelSuffix}</Text>
+                {/* MANTIKSAL ZIRH: Akademik İngilizce Gramer Asimetrisi Düzeltildi */}
+                <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>
+                  {language === 'tr' ? `${k} KURU` : `LEVEL ${k}`}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
