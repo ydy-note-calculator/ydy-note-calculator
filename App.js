@@ -216,23 +216,28 @@ export default function App() {
        if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
        
        gaReportingTimer.current = setTimeout(() => {
-         // MANTIKSAL ZIRH: Tam İzolasyon (Etkinlik Adı Dinamik Parçalandı)
          const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
          
          window.gtag('event', `karne_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': `Ort: ${ort.toFixed(2)}`, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
-         
          if (localTargetText) window.gtag('event', `hedef_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': localTargetText });
          
          gaIndividualTimer.current = setTimeout(() => {
+           
+           // MANTIKSAL ZIRH: Mutlak İzolasyon Ağı (Her not kendi adıyla tablo olur)
            const fireGrade = (examName, val) => {
              if (val !== '') {
-               // Mutlak Ayrışma: notlar_A, notlar_B, notlar_C etkinlikleri yollanır
-               window.gtag('event', `notlar_${selectedCourse}`, { 
-                 'event_category': examName, // Örneğin: "Quiz 1"
+               // "Quiz 1" metnini boşluksuz ve güvenli formata çevirir (Örn: "Quiz_1")
+               const safeExamName = examName.replace(' ', '_');
+               
+               // NİHAİ VURUŞ: Etkinliğin adını "notlar_A_Quiz_1" olarak fırlatır!
+               window.gtag('event', `notlar_${selectedCourse}_${safeExamName}`, { 
+                 'event_category': `${selectedCourse} Kuru`, 
+                 'event_label': examName, 
                  'value': parseFloat(val) 
                });
              }
            };
+
            fireGrade('Quiz 1', grades.quiz[0]); fireGrade('Quiz 2', grades.quiz[1]); fireGrade('Quiz 3', grades.quiz[2]); fireGrade('Quiz 4', grades.quiz[3]);
            fireGrade('Vize 1', grades.vize[0]); fireGrade('Vize 2', grades.vize[1]); fireGrade('Vize 3', grades.vize[2]); fireGrade('Vize 4', grades.vize[3]);
            fireGrade('Writing 1', grades.writing[0]); fireGrade('Writing 2', grades.writing[1]);
@@ -260,7 +265,6 @@ export default function App() {
     if (targetNote && targetNote.text) text += `• ${targetNote.text}\n`;
     if (typeof window !== 'undefined') text += `\n${t.waLink}\n${window.location.href}`;
     
-    // Mutlak Ayrışma Uygulandı
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', `whatsapp_${selectedCourse}`, { 'event_category': 'Sosyal', 'event_label': `Ort: ${results.ortalama}` });
     }
@@ -270,7 +274,6 @@ export default function App() {
   const handleSendFeedback = () => {
     if (!feedbackText.trim() || typeof window === 'undefined' || !window.gtag) return;
     const payload = `${studentName.trim() || 'İsimsiz'}: ${feedbackText.trim()}`;
-    // Mutlak Ayrışma Uygulandı
     window.gtag('event', `mesaj_${selectedCourse}`, { 'event_category': 'GeriBildirim', 'event_label': payload });
     alert(t.successMsg); 
     setFeedbackText(''); 
