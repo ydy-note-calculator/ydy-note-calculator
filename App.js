@@ -12,7 +12,10 @@ const THEMES = {
   hacker: { id: 'hacker', icon: '💻', bg: '#000000', card: '#052e16', text: '#4ade80', textSecondary: '#22c55e', border: '#166534', accent: '#a855f7' }
 };
 
-// MANTIKSAL ZIRH 1: Kusursuz Çeviri Sözlüğü
+const IS_WIN = Platform.OS === 'web' && typeof window !== 'undefined' && /windows/i.test(window.navigator.userAgent.toLowerCase());
+const TR_ICON = IS_WIN ? 'TR' : '🇹🇷';
+const EN_ICON = IS_WIN ? 'EN' : '🇺🇸';
+
 const TRANSLATIONS = {
   tr: {
     sysTitle: 'YDY', sysSub: 'Not Hesaplama Sistemi',
@@ -27,7 +30,8 @@ const TRANSLATIONS = {
     feedbackTitle: 'ÖNERİ VE GERİ BİLDİRİM', nameLabel: 'AD SOYAD', namePlace: 'ADINIZI GİRİNİZ',
     msgPlace: 'ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ (Max 100 Karakter)...',
     sendBtn: 'MESAJI GÖNDER', successMsg: 'Mesajınız başarıyla iletildi!',
-    waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:'
+    waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:',
+    levelSuffix: 'KURU'
   },
   en: {
     sysTitle: 'SFL', sysSub: 'Grade Calculator',
@@ -42,7 +46,8 @@ const TRANSLATIONS = {
     feedbackTitle: 'FEEDBACK & SUGGESTIONS', nameLabel: 'FULL NAME', namePlace: 'ENTER YOUR NAME',
     msgPlace: 'WRITE YOUR SUGGESTIONS OR COMPLAINTS HERE (Max 100 Chars)...',
     sendBtn: 'SEND MESSAGE', successMsg: 'Message sent successfully!',
-    waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:'
+    waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:',
+    levelSuffix: 'LEVEL'
   }
 };
 
@@ -72,7 +77,14 @@ export default function App() {
   const theme = THEMES[activeTheme] || THEMES.hacker;
   const t = TRANSLATIONS[language];
 
-  // MANTIKSAL ZIRH 2: Hafıza Çakışmasını Engelleyen Ayrıştırılmış Başlatma
+  useEffect(() => {
+    return () => {
+      if (debounceCalcTimer.current) clearTimeout(debounceCalcTimer.current);
+      if (debounceSaveTimer.current) clearTimeout(debounceSaveTimer.current);
+      if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (Platform.OS === 'web') setupWebEnvironment();
     loadSavedData();
@@ -85,25 +97,22 @@ export default function App() {
   }, [language]);
 
   const setupWebEnvironment = () => {
-    if (typeof window !== 'undefined' && !document.getElementById('google-analytics')) {
-      const script1 = document.createElement('script');
-      script1.id = 'google-analytics'; script1.async = true;
-      script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
-      document.head.appendChild(script1);
-
-      const script2 = document.createElement('script');
-      script2.id = 'google-analytics-config';
-      script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_TRACKING_ID}',{'send_page_view':true});`;
-      document.head.appendChild(script2);
-    }
-    if (typeof document !== 'undefined') {
+    if (typeof window !== 'undefined') {
+      if (!document.getElementById('google-analytics')) {
+        const script1 = document.createElement('script');
+        script1.id = 'google-analytics'; script1.async = true;
+        script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
+        document.head.appendChild(script1);
+      }
+      if (!document.getElementById('google-analytics-config')) {
+        const script2 = document.createElement('script');
+        script2.id = 'google-analytics-config';
+        script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_TRACKING_ID}',{'send_page_view':true});`;
+        document.head.appendChild(script2);
+      }
       if (!document.querySelector("link[rel*='icon']")) {
         const favicon = document.createElement('link'); favicon.type = 'image/png'; favicon.rel = 'shortcut icon'; favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png';
         document.getElementsByTagName('head')[0].appendChild(favicon);
-      }
-      if (!document.querySelector("meta[name='description']")) {
-        const metaDesc = document.createElement('meta'); metaDesc.name = "description"; metaDesc.content = "YDY Not Hesaplama Sistemi / SFL Grade Calculator"; document.head.appendChild(metaDesc);
-        const metaKeywords = document.createElement('meta'); metaKeywords.name = "keywords"; metaKeywords.content = "ydy not hesaplama, sfl grade calculator, hazırlık atlama"; document.head.appendChild(metaKeywords);
       }
     }
   };
@@ -198,14 +207,35 @@ export default function App() {
     }
     setResults(res);
 
-    // MANTIKSAL ZIRH 3: 3.5 Saniyelik Susturucu (Spam Şarapneli Yok Edildi)
+    // MANTIKSAL ZIRH: 24 Notun Nokta Atışı Raporlanması (Susturucu İçinde)
     if (ort > 0 && typeof window !== 'undefined' && window.gtag) {
        if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
        gaReportingTimer.current = setTimeout(() => {
+         
+         // 1. Genel Karne (Spam Korumalı)
          const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
          window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
          if (localTargetText) window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
-       }, 3500); 
+
+         // 2. Bireysel Not Raporlaması (Sadece Dolu Kutular)
+         const fireGrade = (examName, val) => {
+           if (val !== '') {
+             window.gtag('event', 'bireysel_not', { 
+               'event_category': 'Not_Analizi', 
+               'event_label': `${selectedCourse} Kuru | ${examName}: ${val}` 
+             });
+           }
+         };
+
+         fireGrade('Quiz 1', grades.quiz[0]); fireGrade('Quiz 2', grades.quiz[1]); fireGrade('Quiz 3', grades.quiz[2]); fireGrade('Quiz 4', grades.quiz[3]);
+         fireGrade('Vize 1', grades.vize[0]); fireGrade('Vize 2', grades.vize[1]); fireGrade('Vize 3', grades.vize[2]); fireGrade('Vize 4', grades.vize[3]);
+         fireGrade('Writing 1', grades.writing[0]); fireGrade('Writing 2', grades.writing[1]);
+         fireGrade('Sunum 1', grades.sunum[0]); fireGrade('Sunum 2', grades.sunum[1]);
+         fireGrade('Kanaat 1', grades.kanaat[0]); fireGrade('Kanaat 2', grades.kanaat[1]);
+         fireGrade('Odev 1', grades.odev[0]); fireGrade('Odev 2', grades.odev[1]);
+         fireGrade('Final', grades.final); fireGrade('Butunleme', grades.butunleme);
+
+       }, 3500); // 3.5 Saniye kalkanı
     }
   };
 
@@ -223,10 +253,11 @@ export default function App() {
     if (targetNote && targetNote.text) text += `• ${targetNote.text}\n`;
     if (typeof window !== 'undefined') text += `\n${t.waLink}\n${window.location.href}`;
     
+    // MANTIKSAL ZIRH: Ölüm Vadisi Geciktiricisi (400ms)
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'whatsapp_paylasimi', { 'event_category': 'Sosyal', 'event_label': `Kur: ${selectedCourse} | Ort: ${results.ortalama}` });
     }
-    setTimeout(() => { Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`); }, 150);
+    setTimeout(() => { Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`); }, 400);
   };
 
   const handleSendFeedback = () => {
@@ -262,11 +293,6 @@ export default function App() {
     );
   };
 
-  // MANTIKSAL ZIRH 4: İşletim Sistemi Ajanı
-  const isWin = Platform.OS === 'web' && typeof window !== 'undefined' && /windows/i.test(window.navigator.userAgent.toLowerCase());
-  const trIcon = isWin ? 'TR' : '🇹🇷';
-  const enIcon = isWin ? 'EN' : '🇺🇸';
-
   if (!isLoaded) return null;
 
   return (
@@ -276,19 +302,18 @@ export default function App() {
         
         <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
           
-          {/* MANTIKSAL ZIRH 5: Z-Index Koruyuculu Sol Üst Bayraklar */}
-          <View style={[styles.langContainer, { position: 'absolute', left: 0, top: isMobile ? -20 : 0, zIndex: 9999, elevation: 10 }]}>
+          <View style={[styles.langContainer, { position: 'absolute', left: 0, top: 0, zIndex: 9999, elevation: 10 }]}>
             <TouchableOpacity 
               onPress={() => handleLanguageChange('tr')} 
               style={[styles.langBox, { backgroundColor: language === 'tr' ? theme.accent : theme.card, borderColor: language === 'tr' ? theme.accent : theme.border }]}
             >
-              <Text style={{ fontSize: isWin ? 15 : 22, fontWeight: 'bold', color: language === 'tr' ? '#fff' : theme.text, textAlign: 'center' }}>{trIcon}</Text>
+              <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'tr' ? '#fff' : theme.text, textAlign: 'center' }}>{TR_ICON}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={() => handleLanguageChange('en')} 
               style={[styles.langBox, { backgroundColor: language === 'en' ? theme.accent : theme.card, borderColor: language === 'en' ? theme.accent : theme.border, marginLeft: 8 }]}
             >
-              <Text style={{ fontSize: isWin ? 15 : 22, fontWeight: 'bold', color: language === 'en' ? '#fff' : theme.text, textAlign: 'center' }}>{enIcon}</Text>
+              <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'en' ? '#fff' : theme.text, textAlign: 'center' }}>{EN_ICON}</Text>
             </TouchableOpacity>
           </View>
 
@@ -297,7 +322,6 @@ export default function App() {
             <Text style={[styles.subtitle, { color: theme.accent }]}>{t.sysSub}</Text>
           </View>
           
-          {/* Tema Seçici Sağ Üstte Z-Index Korumalı */}
           <View style={[styles.controlsSelector, isMobile ? { marginTop: 24 } : { position: 'absolute', right: 0, zIndex: 9999, elevation: 10 }]}>
             {Object.values(THEMES).map(themeObj => (
               <TouchableOpacity key={themeObj.id} onPress={() => handleThemeChange(themeObj.id)} style={[styles.themeBox, { backgroundColor: themeObj.card, borderColor: activeTheme === themeObj.id ? themeObj.accent : themeObj.border }]}>
@@ -312,7 +336,7 @@ export default function App() {
           <View style={styles.simetricRow}>
             {['A', 'B', 'C'].map((k, i) => (
               <TouchableOpacity key={k} onPress={() => handleCourseSelection(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
-                <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>{k} {language === 'tr' ? 'KURU' : 'LEVEL'}</Text>
+                <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>{k} {t.levelSuffix}</Text>
               </TouchableOpacity>
             ))}
           </View>
