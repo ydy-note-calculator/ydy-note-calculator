@@ -222,29 +222,26 @@ export default function App() {
          if (localTargetText) window.gtag('event', `hedef_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': localTargetText });
          
          gaIndividualTimer.current = setTimeout(() => {
-           
-           // MANTIKSAL ZIRH: Mutlak İzolasyon Ağı (Her not kendi adıyla tablo olur)
-           const fireGrade = (examName, val) => {
-             if (val !== '') {
-               // "Quiz 1" metnini boşluksuz ve güvenli formata çevirir (Örn: "Quiz_1")
-               const safeExamName = examName.replace(' ', '_');
-               
-               // NİHAİ VURUŞ: Etkinliğin adını "notlar_A_Quiz_1" olarak fırlatır!
-               window.gtag('event', `notlar_${selectedCourse}_${safeExamName}`, { 
+           const allExams = [
+             { name: 'Quiz 1', val: grades.quiz[0] }, { name: 'Quiz 2', val: grades.quiz[1] }, { name: 'Quiz 3', val: grades.quiz[2] }, { name: 'Quiz 4', val: grades.quiz[3] },
+             { name: 'Vize 1', val: grades.vize[0] }, { name: 'Vize 2', val: grades.vize[1] }, { name: 'Vize 3', val: grades.vize[2] }, { name: 'Vize 4', val: grades.vize[3] },
+             { name: 'Writing 1', val: grades.writing[0] }, { name: 'Writing 2', val: grades.writing[1] },
+             { name: 'Sunum 1', val: grades.sunum[0] }, { name: 'Sunum 2', val: grades.sunum[1] },
+             { name: 'Kanaat 1', val: grades.kanaat[0] }, { name: 'Kanaat 2', val: grades.kanaat[1] },
+             { name: 'Odev 1', val: grades.odev[0] }, { name: 'Odev 2', val: grades.odev[1] },
+             { name: 'Final', val: grades.final }, { name: 'Butunleme', val: grades.butunleme }
+           ];
+
+           allExams.forEach(exam => {
+             if (exam.val !== '') {
+               const safeName = exam.name.replace(' ', '_');
+               window.gtag('event', `notlar_${selectedCourse}_${safeName}`, { 
                  'event_category': `${selectedCourse} Kuru`, 
-                 'event_label': examName, 
-                 'value': parseFloat(val) 
+                 'event_label': exam.name, 
+                 'value': parseFloat(exam.val) 
                });
              }
-           };
-
-           fireGrade('Quiz 1', grades.quiz[0]); fireGrade('Quiz 2', grades.quiz[1]); fireGrade('Quiz 3', grades.quiz[2]); fireGrade('Quiz 4', grades.quiz[3]);
-           fireGrade('Vize 1', grades.vize[0]); fireGrade('Vize 2', grades.vize[1]); fireGrade('Vize 3', grades.vize[2]); fireGrade('Vize 4', grades.vize[3]);
-           fireGrade('Writing 1', grades.writing[0]); fireGrade('Writing 2', grades.writing[1]);
-           fireGrade('Sunum 1', grades.sunum[0]); fireGrade('Sunum 2', grades.sunum[1]);
-           fireGrade('Kanaat 1', grades.kanaat[0]); fireGrade('Kanaat 2', grades.kanaat[1]);
-           fireGrade('Odev 1', grades.odev[0]); fireGrade('Odev 2', grades.odev[1]);
-           fireGrade('Final', grades.final); fireGrade('Butunleme', grades.butunleme);
+           });
          }, 50);
 
        }, 3500); 
@@ -279,6 +276,23 @@ export default function App() {
     setFeedbackText(''); 
   };
 
+  const handleGradeChange = (field, index, textVal) => {
+    const v = textVal === '' ? '' : textVal.replace(/[^0-9]/g, '');
+    if (v !== '' && parseInt(v) > 100) return; 
+    
+    setGrades(prev => {
+      const newGrades = { ...prev };
+      if (Array.isArray(newGrades[field])) { 
+        const newArr = [...newGrades[field]]; 
+        newArr[index] = v; 
+        newGrades[field] = newArr; 
+      } else { 
+        newGrades[field] = v; 
+      }
+      return newGrades;
+    });
+  };
+
   const renderInput = (label, field, index = null) => {
     const val = index !== null ? grades[field][index] : grades[field];
     return (
@@ -288,13 +302,7 @@ export default function App() {
           style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
           keyboardType="numeric" 
           value={val} 
-          onChangeText={textVal => {
-            const v = textVal === '' ? '' : textVal.replace(/[^0-9]/g, '');
-            if (v !== '' && parseInt(v) > 100) return; 
-            if (Array.isArray(grades[field])) { 
-              const n = [...grades[field]]; n[index] = v; setGrades({ ...grades, [field]: n }); 
-            } else { setGrades({ ...grades, [field]: v }); }
-          }} 
+          onChangeText={textVal => handleGradeChange(field, index, textVal)} 
           maxLength={3} 
         />
       </View>
