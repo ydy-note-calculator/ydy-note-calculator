@@ -168,7 +168,7 @@ export default function App() {
 
   const handleCourseSelection = (course) => {
     setSelectedCourse(course);
-    if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', 'kur_secildi', { 'event_category': 'Etkilesim', 'event_label': `${course} Kuru` }); }
+    if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', `kur_secildi_${course}`, { 'event_category': 'Navigasyon' }); }
   };
 
   const calculateGrade = () => {
@@ -179,7 +179,6 @@ export default function App() {
     const kP = ((parseFloat(grades.kanaat[0]) || 0) * 0.025) + ((parseFloat(grades.kanaat[1]) || 0) * 0.025);
     const oP = ((parseFloat(grades.odev[0]) || 0) * 0.025) + ((parseFloat(grades.odev[1]) || 0) * 0.025);
     
-    // MANTIKSAL ZIRH: Floating Point Precision (Kayan Nokta Yanılsaması Giderildi)
     const rawOrt = qP + vP + wP + sP + kP + oP;
     const ort = parseFloat(rawOrt.toFixed(2));
     
@@ -217,17 +216,19 @@ export default function App() {
        if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
        
        gaReportingTimer.current = setTimeout(() => {
+         // MANTIKSAL ZIRH: Tam İzolasyon (Etkinlik Adı Dinamik Parçalandı)
          const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
-         window.gtag('event', 'not_hesaplandi', { 'event_category': 'Performans', 'event_label': `Kur: ${selectedCourse} | Ort: ${ort.toFixed(2)}`, 'kur_seviyesi': selectedCourse, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
-         if (localTargetText) window.gtag('event', 'hedef_durumu', { 'event_category': 'Performans', 'event_label': localTargetText });
+         
+         window.gtag('event', `karne_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': `Ort: ${ort.toFixed(2)}`, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
+         
+         if (localTargetText) window.gtag('event', `hedef_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': localTargetText });
          
          gaIndividualTimer.current = setTimeout(() => {
-           // MANTIKSAL ZIRH: Kardinalite Bombası Engellendi (Akıllı Değer Ataması)
            const fireGrade = (examName, val) => {
              if (val !== '') {
-               window.gtag('event', 'bireysel_not', { 
-                 'event_category': `${selectedCourse} Kuru`, 
-                 'event_label': examName, 
+               // Mutlak Ayrışma: notlar_A, notlar_B, notlar_C etkinlikleri yollanır
+               window.gtag('event', `notlar_${selectedCourse}`, { 
+                 'event_category': examName, // Örneğin: "Quiz 1"
                  'value': parseFloat(val) 
                });
              }
@@ -247,7 +248,7 @@ export default function App() {
 
   const handleReset = () => {
     setGrades({ quiz:['','','',''], vize:['','','',''], writing:['',''], sunum:['',''], kanaat:['',''], odev:['',''], final:'', butunleme:'' });
-    if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', 'coklu_sifirlama', { 'event_category': 'Etkilesim', 'event_label': 'Sıfırlama Yapıldı' }); }
+    if (typeof window !== 'undefined' && window.gtag) { window.gtag('event', `sifirlama_${selectedCourse}`, { 'event_category': 'Etkilesim' }); }
   };
 
   const shareOnWhatsApp = () => {
@@ -259,16 +260,18 @@ export default function App() {
     if (targetNote && targetNote.text) text += `• ${targetNote.text}\n`;
     if (typeof window !== 'undefined') text += `\n${t.waLink}\n${window.location.href}`;
     
+    // Mutlak Ayrışma Uygulandı
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'whatsapp_paylasimi', { 'event_category': 'Sosyal', 'event_label': `Kur: ${selectedCourse} | Ort: ${results.ortalama}` });
+      window.gtag('event', `whatsapp_${selectedCourse}`, { 'event_category': 'Sosyal', 'event_label': `Ort: ${results.ortalama}` });
     }
     setTimeout(() => { Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`); }, 400);
   };
 
   const handleSendFeedback = () => {
     if (!feedbackText.trim() || typeof window === 'undefined' || !window.gtag) return;
-    const payload = `[${selectedCourse}] ${studentName.trim() || 'İsimsiz'}: ${feedbackText.trim()}`;
-    window.gtag('event', 'kullanici_mesaji', { 'event_category': 'GeriBildirim', 'event_label': payload });
+    const payload = `${studentName.trim() || 'İsimsiz'}: ${feedbackText.trim()}`;
+    // Mutlak Ayrışma Uygulandı
+    window.gtag('event', `mesaj_${selectedCourse}`, { 'event_category': 'GeriBildirim', 'event_label': payload });
     alert(t.successMsg); 
     setFeedbackText(''); 
   };
