@@ -85,25 +85,61 @@ export default function App() {
   
   const lastReportedState = React.useRef(null);
   const pendingGABatch = React.useRef(null);
+  
+  const latestState = React.useRef({ grades, selectedCourse, studentName, activeTheme, language });
 
   const theme = THEMES[activeTheme] || THEMES.hacker;
   const t = TRANSLATIONS[language];
 
   useEffect(() => {
+    // MANTIKSAL ZIRH 1: O(1) CPU Script Enjeksiyonu
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && !window.ga_injected) {
+      const script1 = document.createElement('script'); script1.id = 'google-analytics'; script1.async = true; script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`; document.head.appendChild(script1);
+      const script2 = document.createElement('script'); script2.id = 'google-analytics-config'; script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_TRACKING_ID}',{'send_page_view':true});`; document.head.appendChild(script2);
+      const favicon = document.createElement('link'); favicon.type = 'image/png'; favicon.rel = 'shortcut icon'; favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png'; document.getElementsByTagName('head')[0].appendChild(favicon);
+      window.ga_injected = true;
+    }
+
+    const initLoad = async () => {
+      try {
+        const savedData = await AsyncStorage.getItem('@ydy_data');
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          let loadedGrades = parsed.grades || grades;
+          if (typeof loadedGrades.writing === 'string') loadedGrades.writing = [loadedGrades.writing, ''];
+          if (typeof loadedGrades.sunum === 'string') loadedGrades.sunum = [loadedGrades.sunum, ''];
+          if (typeof loadedGrades.kanaat === 'string') loadedGrades.kanaat = [loadedGrades.kanaat, ''];
+          if (typeof loadedGrades.odev === 'string') loadedGrades.odev = [loadedGrades.odev, ''];
+          setGrades(loadedGrades); setSelectedCourse(parsed.selectedCourse || 'A'); setStudentName(parsed.studentName || '');
+          if (parsed.activeTheme && THEMES[parsed.activeTheme]) setActiveTheme(parsed.activeTheme);
+          if (parsed.language && TRANSLATIONS[parsed.language]) setLanguage(parsed.language);
+        }
+      } catch (e) { console.error(e); } finally { setIsLoaded(true); }
+    };
+    initLoad();
+
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && pendingGABatch.current && typeof window !== 'undefined' && window.gtag) {
-        const { course, ort, detayText, localTargetText, allExams } = pendingGABatch.current;
-        window.gtag('event', `karne_${course}`, { 'event_category': 'Performans', 'event_label': `Ort: ${ort.toFixed(2)}`, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
-        if (localTargetText) window.gtag('event', `hedef_${course}`, { 'event_category': 'Performans', 'event_label': localTargetText });
+      if (document.visibilityState === 'hidden') {
+        // MANTIKSAL ZIRH 2: Senkron Ölüm Anı Kaydı (Async Death Trap İptal)
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('@@ydy_data', JSON.stringify(latestState.current)); // Web için senkron kurtarma
+        } else {
+          AsyncStorage.setItem('@ydy_data', JSON.stringify(latestState.current)).catch(()=>{});
+        }
         
-        allExams.forEach(exam => {
-          if (exam.val !== '') {
-            const safeName = exam.name.replace(/ /g, '_');
-            window.gtag('event', `notlar_${course}_${safeName}`, { 'event_category': `${course} Kuru`, 'event_label': exam.name, 'value': parseFloat(exam.val) });
-          }
-        });
+        if (pendingGABatch.current && typeof window !== 'undefined' && window.gtag) {
+          const { course, ort, detayText, localTargetText, allExams } = pendingGABatch.current;
+          window.gtag('event', `karne_${course}`, { 'event_category': 'Performans', 'event_label': `Ort: ${ort.toFixed(2)}`, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
+          if (localTargetText) window.gtag('event', `hedef_${course}`, { 'event_category': 'Performans', 'event_label': localTargetText });
+          allExams.forEach(exam => {
+            if (exam.val !== '') {
+              const safeName = exam.name.replace(/ /g, '_');
+              window.gtag('event', `notlar_${course}_${safeName}`, { 'event_category': `${course} Kuru`, 'event_label': exam.name, 'value': parseFloat(exam.val) });
+            }
+          });
+          pendingGABatch.current = null;
+        }
         
-        pendingGABatch.current = null;
         if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
         if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
       }
@@ -125,9 +161,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (Platform.OS === 'web') setupWebEnvironment();
-    loadSavedData();
-  }, []);
+    latestState.current = { grades, selectedCourse, studentName, activeTheme, language };
+  }, [grades, selectedCourse, studentName, activeTheme, language]);
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -140,37 +175,6 @@ export default function App() {
       metaKeys.content = t.metaKeys;
     }
   }, [language]);
-
-  const setupWebEnvironment = () => {
-    if (typeof window !== 'undefined') {
-      if (!document.getElementById('google-analytics')) {
-        const script1 = document.createElement('script'); script1.id = 'google-analytics'; script1.async = true; script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`; document.head.appendChild(script1);
-      }
-      if (!document.getElementById('google-analytics-config')) {
-        const script2 = document.createElement('script'); script2.id = 'google-analytics-config'; script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_TRACKING_ID}',{'send_page_view':true});`; document.head.appendChild(script2);
-      }
-      if (!document.querySelector("link[rel*='icon']")) {
-        const favicon = document.createElement('link'); favicon.type = 'image/png'; favicon.rel = 'shortcut icon'; favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png'; document.getElementsByTagName('head')[0].appendChild(favicon);
-      }
-    }
-  };
-
-  const loadSavedData = async () => {
-    try {
-      const savedData = await AsyncStorage.getItem('@ydy_data');
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        let loadedGrades = parsed.grades || grades;
-        if (typeof loadedGrades.writing === 'string') loadedGrades.writing = [loadedGrades.writing, ''];
-        if (typeof loadedGrades.sunum === 'string') loadedGrades.sunum = [loadedGrades.sunum, ''];
-        if (typeof loadedGrades.kanaat === 'string') loadedGrades.kanaat = [loadedGrades.kanaat, ''];
-        if (typeof loadedGrades.odev === 'string') loadedGrades.odev = [loadedGrades.odev, ''];
-        setGrades(loadedGrades); setSelectedCourse(parsed.selectedCourse || 'A'); setStudentName(parsed.studentName || '');
-        if (parsed.activeTheme && THEMES[parsed.activeTheme]) setActiveTheme(parsed.activeTheme);
-        if (parsed.language && TRANSLATIONS[parsed.language]) setLanguage(parsed.language);
-      }
-    } catch (e) { console.error(e); } finally { setIsLoaded(true); }
-  };
 
   const saveData = async () => {
     if (!isLoaded) return;
@@ -246,7 +250,6 @@ export default function App() {
     }
     setResults(res);
 
-    // MANTIKSAL ZIRH 1: "Sıfır Not" Paradoksu Kırıldı. Kutuda herhangi bir şey var mı diye bakılır.
     const hasAnyGrade = Object.values(grades).some(val => Array.isArray(val) ? val.some(v => v !== '') : val !== '');
 
     if (hasAnyGrade && typeof window !== 'undefined' && window.gtag) {
@@ -321,7 +324,10 @@ export default function App() {
   };
 
   const handleGradeChange = (field, index, textVal) => {
-    const v = textVal === '' ? '' : textVal.replace(/[^0-9]/g, '');
+    let v = textVal.replace(/[^0-9]/g, '');
+    if (v.length > 1 && v.startsWith('0')) {
+      v = v.replace(/^0+/, '') || '0';
+    }
     if (v !== '' && parseInt(v) > 100) return; 
     
     setGrades(prev => {
@@ -339,7 +345,6 @@ export default function App() {
       <View style={styles.flexItem}>
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
         <TextInput 
-          // MANTIKSAL ZIRH 2: iOS Klavye Esareti Giderildi (returnKeyType="done")
           style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
           keyboardType="numeric" returnKeyType="done" value={val} onChangeText={textVal => handleGradeChange(field, index, textVal)} maxLength={3} 
         />
