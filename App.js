@@ -32,6 +32,8 @@ const TRANSLATIONS = {
     sendBtn: 'MESAJI GÖNDER', successMsg: 'Mesajınız başarıyla iletildi!',
     waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:',
     levelSuffix: 'KURU',
+    dilci: 'DİLCİ',
+    dilciInfo: 'İngilizce Öğretmenliği, İngilizce Mütercim-Tercümanlık ve Amerikan Kültürü ve Edebiyatı bölümleri öğrencileri içindir.',
     metaDesc: 'YDY Not Hesaplama Sistemi. Üniversite hazırlık öğrencileri için vize, final ve bütünleme ortalama hesaplama aracı.',
     metaKeys: 'ydy not hesaplama, hazırlık atlama, vize final hesaplama, ydy'
   },
@@ -50,6 +52,8 @@ const TRANSLATIONS = {
     sendBtn: 'SEND MESSAGE', successMsg: 'Message sent successfully!',
     waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:',
     levelSuffix: 'LEVEL',
+    dilci: 'LINGUIST',
+    dilciInfo: 'For students of English Language Teaching, Translation and Interpreting, and American Culture and Literature departments.',
     metaDesc: 'SFL Grade Calculator. Midterm, final and make-up average calculation tool for university prep students.',
     metaKeys: 'sfl grade calculator, proficiency exam, midterm final calculation'
   }
@@ -96,25 +100,16 @@ export default function App() {
     loadSavedData();
   }, []);
 
-  // MANTIKSAL ZIRH: Dinamik SEO Motoru (Dil değiştiğinde Meta Etiketler de değişir)
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.title = language === 'tr' ? "YDY Not Hesaplama Sistemi" : "SFL Grade Calculator";
       
       let metaDesc = document.querySelector("meta[name='description']");
-      if (!metaDesc) {
-        metaDesc = document.createElement('meta');
-        metaDesc.name = "description";
-        document.head.appendChild(metaDesc);
-      }
+      if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
       metaDesc.content = t.metaDesc;
 
       let metaKeys = document.querySelector("meta[name='keywords']");
-      if (!metaKeys) {
-        metaKeys = document.createElement('meta');
-        metaKeys.name = "keywords";
-        document.head.appendChild(metaKeys);
-      }
+      if (!metaKeys) { metaKeys = document.createElement('meta'); metaKeys.name = "keywords"; document.head.appendChild(metaKeys); }
       metaKeys.content = t.metaKeys;
     }
   }, [language]);
@@ -203,8 +198,10 @@ export default function App() {
     const rawOrt = qP + vP + wP + sP + kP + oP;
     const ort = parseFloat(rawOrt.toFixed(2));
     
-    const limit = selectedCourse === 'A' ? 84.5 : selectedCourse === 'B' ? 79.5 : 74.5;
-    const needed = Math.ceil((65 - (ort * 0.4)) / 0.6);
+    const limit = selectedCourse === 'A' ? 84.5 : (selectedCourse === 'B' || selectedCourse === 'Dilci') ? 79.5 : 74.5;
+    const finalPassLimit = selectedCourse === 'Dilci' ? 74.5 : 64.5;
+    const needed = Math.ceil((finalPassLimit - (ort * 0.4)) / 0.6);
+    
     let res = { ortalama: ort.toFixed(2), durum: '', renk: '', fH: null, bH: null };
     let localTargetText = null;
 
@@ -218,7 +215,7 @@ export default function App() {
       else { setTargetNote({ type: 'fail', text: t.impossible }); localTargetText = 'Kritik: Finalde 100 yetmiyor'; }
     } else if (grades.butunleme === '') {
       const fS = (parseFloat(grades.final) * 0.6 + ort * 0.4).toFixed(2); res.fH = fS; 
-      if (fS >= 64.5) { res.durum = t.finalPass; res.renk = theme.accent; setTargetNote(null); } 
+      if (fS >= finalPassLimit) { res.durum = t.finalPass; res.renk = theme.accent; setTargetNote(null); } 
       else {
         res.durum = t.butFail; res.renk = '#ef4444';
         if (needed <= 100) { setTargetNote({ type: 'target', text: `${t.neededBut}${needed}` }); localTargetText = `Büt Hedefi: ${needed}`; } 
@@ -227,7 +224,7 @@ export default function App() {
     } else {
       if (grades.final !== '') res.fH = (parseFloat(grades.final) * 0.6 + ort * 0.4).toFixed(2);
       const bS = (parseFloat(grades.butunleme) * 0.6 + ort * 0.4).toFixed(2); res.bH = bS;
-      const isP = bS >= 64.5; res.durum = isP ? t.butPass : t.fail; res.renk = isP ? theme.accent : '#ef4444';
+      const isP = bS >= finalPassLimit; res.durum = isP ? t.butPass : t.fail; res.renk = isP ? theme.accent : '#ef4444';
       setTargetNote(null);
     }
     setResults(res);
@@ -238,7 +235,6 @@ export default function App() {
        
        gaReportingTimer.current = setTimeout(() => {
          const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
-         
          window.gtag('event', `karne_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': `Ort: ${ort.toFixed(2)}`, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
          if (localTargetText) window.gtag('event', `hedef_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': localTargetText });
          
@@ -257,14 +253,11 @@ export default function App() {
              if (exam.val !== '') {
                const safeName = exam.name.replace(' ', '_');
                window.gtag('event', `notlar_${selectedCourse}_${safeName}`, { 
-                 'event_category': `${selectedCourse} Kuru`, 
-                 'event_label': exam.name, 
-                 'value': parseFloat(exam.val) 
+                 'event_category': `${selectedCourse} Kuru`, 'event_label': exam.name, 'value': parseFloat(exam.val) 
                });
              }
            });
          }, 50);
-
        }, 3500); 
     }
   };
@@ -304,12 +297,8 @@ export default function App() {
     setGrades(prev => {
       const newGrades = { ...prev };
       if (Array.isArray(newGrades[field])) { 
-        const newArr = [...newGrades[field]]; 
-        newArr[index] = v; 
-        newGrades[field] = newArr; 
-      } else { 
-        newGrades[field] = v; 
-      }
+        const newArr = [...newGrades[field]]; newArr[index] = v; newGrades[field] = newArr; 
+      } else { newGrades[field] = v; }
       return newGrades;
     });
   };
@@ -321,13 +310,15 @@ export default function App() {
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
         <TextInput 
           style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-          keyboardType="numeric" 
-          value={val} 
-          onChangeText={textVal => handleGradeChange(field, index, textVal)} 
-          maxLength={3} 
+          keyboardType="numeric" value={val} onChangeText={textVal => handleGradeChange(field, index, textVal)} maxLength={3} 
         />
       </View>
     );
+  };
+
+  const showDilciInfo = () => {
+    if (Platform.OS === 'web') window.alert(t.dilciInfo);
+    else alert(t.dilciInfo);
   };
 
   if (!isLoaded) return null;
@@ -341,16 +332,10 @@ export default function App() {
           <View style={isMobile ? styles.headerRowMobile : styles.headerRowDesktop}>
             
             <View style={[styles.langContainer, { position: 'absolute', left: 0, top: 0, zIndex: 9999, elevation: 10 }]}>
-              <TouchableOpacity 
-                onPress={() => handleLanguageChange('tr')} 
-                style={[styles.langBox, { backgroundColor: language === 'tr' ? theme.accent : theme.card, borderColor: language === 'tr' ? theme.accent : theme.border }]}
-              >
+              <TouchableOpacity onPress={() => handleLanguageChange('tr')} style={[styles.langBox, { backgroundColor: language === 'tr' ? theme.accent : theme.card, borderColor: language === 'tr' ? theme.accent : theme.border }]}>
                 <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'tr' ? '#fff' : theme.text, textAlign: 'center' }}>{TR_ICON}</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={() => handleLanguageChange('en')} 
-                style={[styles.langBox, { backgroundColor: language === 'en' ? theme.accent : theme.card, borderColor: language === 'en' ? theme.accent : theme.border, marginLeft: 8 }]}
-              >
+              <TouchableOpacity onPress={() => handleLanguageChange('en')} style={[styles.langBox, { backgroundColor: language === 'en' ? theme.accent : theme.card, borderColor: language === 'en' ? theme.accent : theme.border, marginLeft: 8 }]}>
                 <Text style={{ fontSize: IS_WIN ? 15 : 22, fontWeight: 'bold', color: language === 'en' ? '#fff' : theme.text, textAlign: 'center' }}>{EN_ICON}</Text>
               </TouchableOpacity>
             </View>
@@ -372,10 +357,23 @@ export default function App() {
           <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <Text style={[styles.label, { color: theme.accent }]}>{t.levelSelect}</Text>
             <View style={styles.simetricRow}>
-              {['A', 'B', 'C'].map((k, i) => (
-                <TouchableOpacity key={k} onPress={() => handleCourseSelection(k)} style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 16 }]}>
-                  <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text }]}>
-                    {language === 'tr' ? `${k} ${t.levelSuffix}` : `${t.levelSuffix} ${k}`}
+              {['A', 'B', 'C', 'Dilci'].map((k, i) => (
+                <TouchableOpacity 
+                  key={k} 
+                  onPress={() => handleCourseSelection(k)} 
+                  style={[styles.kurBtn, { backgroundColor: selectedCourse === k ? theme.accent : theme.bg, borderColor: theme.border, marginLeft: i === 0 ? 0 : 8 }]}
+                >
+                  {k === 'Dilci' && (
+                    <TouchableOpacity 
+                      style={[styles.infoIconBox, { backgroundColor: selectedCourse === k ? '#ef4444' : theme.accent }]} 
+                      onPress={showDilciInfo}
+                      {...(Platform.OS === 'web' ? { title: t.dilciInfo } : {})}
+                    >
+                      <Text style={styles.infoIconText}>?</Text>
+                    </TouchableOpacity>
+                  )}
+                  <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text, fontSize: isMobile ? 12 : 14 }]}>
+                    {language === 'tr' ? (k === 'Dilci' ? t.dilci : `${k} ${t.levelSuffix}`) : (k === 'Dilci' ? t.dilci : `${t.levelSuffix} ${k}`)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -425,20 +423,11 @@ export default function App() {
             <Text style={[styles.iL, { color: theme.text }]}>{t.nameLabel}</Text>
             <TextInput 
               style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} 
-              value={studentName} 
-              onChangeText={setStudentName} 
-              placeholder={t.namePlace} 
-              placeholderTextColor={theme.textSecondary} 
-              maxLength={35} // MANTIKSAL ZIRH: GA4 Truncation Kalkanı
+              value={studentName} onChangeText={setStudentName} placeholder={t.namePlace} placeholderTextColor={theme.textSecondary} maxLength={35} 
             />
             <TextInput 
               style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-              placeholder={t.msgPlace} 
-              placeholderTextColor={theme.textSecondary} 
-              value={feedbackText} 
-              onChangeText={setFeedbackText} 
-              maxLength={100} 
-              multiline={true} 
+              placeholder={t.msgPlace} placeholderTextColor={theme.textSecondary} value={feedbackText} onChangeText={setFeedbackText} maxLength={100} multiline={true} 
             />
             <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
               <Text style={styles.fSendBtnT}>{t.sendBtn}</Text>
@@ -470,8 +459,10 @@ const styles = StyleSheet.create({
   simetricRow: { flexDirection: 'row', width: '100%' }, 
   flexItem: { flex: 1 }, 
   gap16: { width: 16 },
-  kurBtn: { flex: 1, padding: 16, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
-  kurBtnT: { fontWeight: 'bold', fontSize: 15 },
+  kurBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  kurBtnT: { fontWeight: 'bold' },
+  infoIconBox: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center', zIndex: 10, elevation: 3 },
+  infoIconText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   iL: { fontSize: 12, marginBottom: 8, fontWeight: '800' },
   input: { borderRadius: 10, padding: 14, borderWidth: 1, fontSize: 15, textAlign: 'center', minHeight: 50 },
   res: { borderRadius: 20, padding: 24, borderTopWidth: 5, marginBottom: 80 },
