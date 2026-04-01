@@ -28,7 +28,7 @@ const TRANSLATIONS = {
     impossible: '100 alsan da geçilemiyor!',
     average: 'ORTALAMA:', reset: 'Tüm Notları Sıfırla', share: 'WhatsApp ile Paylaş',
     feedbackTitle: 'ÖNERİ VE GERİ BİLDİRİM', nameLabel: 'AD SOYAD', namePlace: 'ADINIZI GİRİNİZ',
-    msgPlace: 'ÖNERİ, SORU VE ŞİKAYETLERİNİZİ BURAYA YAZABİLİRSİNİZ (Max 100 Karakter)...',
+    msgPlace: 'ÖNERİ, SORU VE ŞİKAYETLERİNİZİ YAZINIZ (Max 70 Karakter)...',
     sendBtn: 'MESAJI GÖNDER', successMsg: 'Mesajınız başarıyla iletildi!',
     waMsg: 'YDY Not Hesaplama Sonucum', waLevel: 'Kur Seviyesi', waAvg: 'Güncel Ortalama', waFinalNote: 'Yıl Sonu Notu', waButNote: 'Büt. Sonu Notu', waStatus: 'Akademik Durum', waLink: 'Sistemi kullan:',
     levelSuffix: 'KURU',
@@ -48,7 +48,7 @@ const TRANSLATIONS = {
     impossible: 'Cannot pass even with 100!',
     average: 'AVERAGE:', reset: 'Reset All Grades', share: 'Share on WhatsApp',
     feedbackTitle: 'FEEDBACK & SUGGESTIONS', nameLabel: 'FULL NAME', namePlace: 'ENTER YOUR NAME',
-    msgPlace: 'WRITE YOUR SUGGESTIONS OR COMPLAINTS HERE (Max 100 Chars)...',
+    msgPlace: 'WRITE YOUR SUGGESTIONS OR COMPLAINTS HERE (Max 70 Chars)...',
     sendBtn: 'SEND MESSAGE', successMsg: 'Message sent successfully!',
     waMsg: 'SFL Grade Calculator Result', waLevel: 'Level', waAvg: 'Current Average', waFinalNote: 'End of Year Grade', waButNote: 'Make-up Final Grade', waStatus: 'Academic Status', waLink: 'Use the system:',
     levelSuffix: 'LEVEL',
@@ -82,12 +82,41 @@ export default function App() {
   const debounceSaveTimer = React.useRef(null);
   const gaReportingTimer = React.useRef(null);
   const gaIndividualTimer = React.useRef(null);
+  
+  const lastReportedState = React.useRef(null);
+  const pendingGABatch = React.useRef(null);
 
   const theme = THEMES[activeTheme] || THEMES.hacker;
   const t = TRANSLATIONS[language];
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && pendingGABatch.current && typeof window !== 'undefined' && window.gtag) {
+        const { course, ort, detayText, localTargetText, allExams } = pendingGABatch.current;
+        window.gtag('event', `karne_${course}`, { 'event_category': 'Performans', 'event_label': `Ort: ${ort.toFixed(2)}`, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
+        if (localTargetText) window.gtag('event', `hedef_${course}`, { 'event_category': 'Performans', 'event_label': localTargetText });
+        
+        allExams.forEach(exam => {
+          if (exam.val !== '') {
+            const safeName = exam.name.replace(/ /g, '_');
+            window.gtag('event', `notlar_${course}_${safeName}`, { 'event_category': `${course} Kuru`, 'event_label': exam.name, 'value': parseFloat(exam.val) });
+          }
+        });
+        
+        pendingGABatch.current = null;
+        if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
+        if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
+      }
+    };
+
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
     return () => {
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
       if (debounceCalcTimer.current) clearTimeout(debounceCalcTimer.current);
       if (debounceSaveTimer.current) clearTimeout(debounceSaveTimer.current);
       if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
@@ -103,11 +132,9 @@ export default function App() {
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.title = language === 'tr' ? "YDY Not Hesaplama Sistemi" : "SFL Grade Calculator";
-      
       let metaDesc = document.querySelector("meta[name='description']");
       if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
       metaDesc.content = t.metaDesc;
-
       let metaKeys = document.querySelector("meta[name='keywords']");
       if (!metaKeys) { metaKeys = document.createElement('meta'); metaKeys.name = "keywords"; document.head.appendChild(metaKeys); }
       metaKeys.content = t.metaKeys;
@@ -117,20 +144,13 @@ export default function App() {
   const setupWebEnvironment = () => {
     if (typeof window !== 'undefined') {
       if (!document.getElementById('google-analytics')) {
-        const script1 = document.createElement('script');
-        script1.id = 'google-analytics'; script1.async = true;
-        script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
-        document.head.appendChild(script1);
+        const script1 = document.createElement('script'); script1.id = 'google-analytics'; script1.async = true; script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`; document.head.appendChild(script1);
       }
       if (!document.getElementById('google-analytics-config')) {
-        const script2 = document.createElement('script');
-        script2.id = 'google-analytics-config';
-        script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_TRACKING_ID}',{'send_page_view':true});`;
-        document.head.appendChild(script2);
+        const script2 = document.createElement('script'); script2.id = 'google-analytics-config'; script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_TRACKING_ID}',{'send_page_view':true});`; document.head.appendChild(script2);
       }
       if (!document.querySelector("link[rel*='icon']")) {
-        const favicon = document.createElement('link'); favicon.type = 'image/png'; favicon.rel = 'shortcut icon'; favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png';
-        document.getElementsByTagName('head')[0].appendChild(favicon);
+        const favicon = document.createElement('link'); favicon.type = 'image/png'; favicon.rel = 'shortcut icon'; favicon.href = 'https://cdn-icons-png.flaticon.com/512/2643/2643506.png'; document.getElementsByTagName('head')[0].appendChild(favicon);
       }
     }
   };
@@ -145,10 +165,7 @@ export default function App() {
         if (typeof loadedGrades.sunum === 'string') loadedGrades.sunum = [loadedGrades.sunum, ''];
         if (typeof loadedGrades.kanaat === 'string') loadedGrades.kanaat = [loadedGrades.kanaat, ''];
         if (typeof loadedGrades.odev === 'string') loadedGrades.odev = [loadedGrades.odev, ''];
-        
-        setGrades(loadedGrades);
-        setSelectedCourse(parsed.selectedCourse || 'A');
-        setStudentName(parsed.studentName || '');
+        setGrades(loadedGrades); setSelectedCourse(parsed.selectedCourse || 'A'); setStudentName(parsed.studentName || '');
         if (parsed.activeTheme && THEMES[parsed.activeTheme]) setActiveTheme(parsed.activeTheme);
         if (parsed.language && TRANSLATIONS[parsed.language]) setLanguage(parsed.language);
       }
@@ -229,36 +246,49 @@ export default function App() {
     }
     setResults(res);
 
-    if (ort > 0 && typeof window !== 'undefined' && window.gtag) {
+    // MANTIKSAL ZIRH 1: "Sıfır Not" Paradoksu Kırıldı. Kutuda herhangi bir şey var mı diye bakılır.
+    const hasAnyGrade = Object.values(grades).some(val => Array.isArray(val) ? val.some(v => v !== '') : val !== '');
+
+    if (hasAnyGrade && typeof window !== 'undefined' && window.gtag) {
        if (gaReportingTimer.current) clearTimeout(gaReportingTimer.current);
        if (gaIndividualTimer.current) clearTimeout(gaIndividualTimer.current);
        
+       const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
+       const currentReportString = `${selectedCourse}_${ort.toFixed(2)}_${detayText}`;
+
+       if (lastReportedState.current === currentReportString) {
+         pendingGABatch.current = null; 
+         return;
+       }
+       
+       const allExams = [
+         { name: 'Quiz 1', val: grades.quiz[0] }, { name: 'Quiz 2', val: grades.quiz[1] }, { name: 'Quiz 3', val: grades.quiz[2] }, { name: 'Quiz 4', val: grades.quiz[3] },
+         { name: 'Vize 1', val: grades.vize[0] }, { name: 'Vize 2', val: grades.vize[1] }, { name: 'Vize 3', val: grades.vize[2] }, { name: 'Vize 4', val: grades.vize[3] },
+         { name: 'Writing 1', val: grades.writing[0] }, { name: 'Writing 2', val: grades.writing[1] },
+         { name: 'Sunum 1', val: grades.sunum[0] }, { name: 'Sunum 2', val: grades.sunum[1] },
+         { name: 'Kanaat 1', val: grades.kanaat[0] }, { name: 'Kanaat 2', val: grades.kanaat[1] },
+         { name: 'Odev 1', val: grades.odev[0] }, { name: 'Odev 2', val: grades.odev[1] },
+         { name: 'Final', val: grades.final }, { name: 'Butunleme', val: grades.butunleme }
+       ];
+
+       pendingGABatch.current = { course: selectedCourse, ort, detayText, localTargetText, allExams };
+
        gaReportingTimer.current = setTimeout(() => {
-         const detayText = `Q:[${grades.quiz.map(x=>x||'-').join(',')}] V:[${grades.vize.map(x=>x||'-').join(',')}] W:[${grades.writing.map(x=>x||'-').join(',')}] S:[${grades.sunum.map(x=>x||'-').join(',')}] K:[${grades.kanaat.map(x=>x||'-').join(',')}] O:[${grades.odev.map(x=>x||'-').join(',')}] F:${grades.final||'-'} B:${grades.butunleme||'-'}`;
+         lastReportedState.current = currentReportString;
+         
          window.gtag('event', `karne_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': `Ort: ${ort.toFixed(2)}`, 'karne_ozeti': detayText, 'value': parseFloat(ort.toFixed(2)) });
          if (localTargetText) window.gtag('event', `hedef_${selectedCourse}`, { 'event_category': 'Performans', 'event_label': localTargetText });
          
          gaIndividualTimer.current = setTimeout(() => {
-           const allExams = [
-             { name: 'Quiz 1', val: grades.quiz[0] }, { name: 'Quiz 2', val: grades.quiz[1] }, { name: 'Quiz 3', val: grades.quiz[2] }, { name: 'Quiz 4', val: grades.quiz[3] },
-             { name: 'Vize 1', val: grades.vize[0] }, { name: 'Vize 2', val: grades.vize[1] }, { name: 'Vize 3', val: grades.vize[2] }, { name: 'Vize 4', val: grades.vize[3] },
-             { name: 'Writing 1', val: grades.writing[0] }, { name: 'Writing 2', val: grades.writing[1] },
-             { name: 'Sunum 1', val: grades.sunum[0] }, { name: 'Sunum 2', val: grades.sunum[1] },
-             { name: 'Kanaat 1', val: grades.kanaat[0] }, { name: 'Kanaat 2', val: grades.kanaat[1] },
-             { name: 'Odev 1', val: grades.odev[0] }, { name: 'Odev 2', val: grades.odev[1] },
-             { name: 'Final', val: grades.final }, { name: 'Butunleme', val: grades.butunleme }
-           ];
-
            allExams.forEach(exam => {
              if (exam.val !== '') {
-               const safeName = exam.name.replace(' ', '_');
-               window.gtag('event', `notlar_${selectedCourse}_${safeName}`, { 
-                 'event_category': `${selectedCourse} Kuru`, 'event_label': exam.name, 'value': parseFloat(exam.val) 
-               });
+               const safeName = exam.name.replace(/ /g, '_');
+               window.gtag('event', `notlar_${selectedCourse}_${safeName}`, { 'event_category': `${selectedCourse} Kuru`, 'event_label': exam.name, 'value': parseFloat(exam.val) });
              }
            });
+           pendingGABatch.current = null;
          }, 50);
-       }, 3500); 
+       }, 2500); 
     }
   };
 
@@ -284,7 +314,7 @@ export default function App() {
 
   const handleSendFeedback = () => {
     if (!feedbackText.trim() || typeof window === 'undefined' || !window.gtag) return;
-    const payload = `${studentName.trim() || 'İsimsiz'}: ${feedbackText.trim()}`;
+    const payload = `[${studentName.trim().substring(0, 20) || 'İsimsiz'}]: ${feedbackText.trim().substring(0, 70)}`;
     window.gtag('event', `mesaj_${selectedCourse}`, { 'event_category': 'GeriBildirim', 'event_label': payload });
     alert(t.successMsg); 
     setFeedbackText(''); 
@@ -309,14 +339,16 @@ export default function App() {
       <View style={styles.flexItem}>
         <Text style={[styles.iL, { color: theme.text }]}>{label}</Text>
         <TextInput 
+          // MANTIKSAL ZIRH 2: iOS Klavye Esareti Giderildi (returnKeyType="done")
           style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-          keyboardType="numeric" value={val} onChangeText={textVal => handleGradeChange(field, index, textVal)} maxLength={3} 
+          keyboardType="numeric" returnKeyType="done" value={val} onChangeText={textVal => handleGradeChange(field, index, textVal)} maxLength={3} 
         />
       </View>
     );
   };
 
-  const showDilciInfo = () => {
+  const showDilciInfo = (e) => {
+    if (Platform.OS === 'web' && e && e.stopPropagation) e.stopPropagation();
     if (Platform.OS === 'web') window.alert(t.dilciInfo);
     else alert(t.dilciInfo);
   };
@@ -372,7 +404,7 @@ export default function App() {
                       <Text style={styles.infoIconText}>?</Text>
                     </TouchableOpacity>
                   )}
-                  <Text style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text, fontSize: isMobile ? 12 : 14 }]}>
+                  <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.kurBtnT, { color: selectedCourse === k ? '#fff' : theme.text, fontSize: isMobile ? 12 : 14 }]}>
                     {language === 'tr' ? (k === 'Dilci' ? t.dilci : `${k} ${t.levelSuffix}`) : (k === 'Dilci' ? t.dilci : `${t.levelSuffix} ${k}`)}
                   </Text>
                 </TouchableOpacity>
@@ -423,11 +455,11 @@ export default function App() {
             <Text style={[styles.iL, { color: theme.text }]}>{t.nameLabel}</Text>
             <TextInput 
               style={[styles.input, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlign: 'left' }]} 
-              value={studentName} onChangeText={setStudentName} placeholder={t.namePlace} placeholderTextColor={theme.textSecondary} maxLength={35} 
+              value={studentName} onChangeText={setStudentName} placeholder={t.namePlace} placeholderTextColor={theme.textSecondary} maxLength={20} returnKeyType="done"
             />
             <TextInput 
               style={[styles.fInputMultiline, { backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }]} 
-              placeholder={t.msgPlace} placeholderTextColor={theme.textSecondary} value={feedbackText} onChangeText={setFeedbackText} maxLength={100} multiline={true} 
+              placeholder={t.msgPlace} placeholderTextColor={theme.textSecondary} value={feedbackText} onChangeText={setFeedbackText} maxLength={70} multiline={true} 
             />
             <TouchableOpacity style={[styles.fSendBtn, {backgroundColor: theme.accent}]} onPress={handleSendFeedback}>
               <Text style={styles.fSendBtnT}>{t.sendBtn}</Text>
